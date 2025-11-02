@@ -5,6 +5,8 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QTextEdit
+from PyQt5.QtGui import QKeySequence
+from PyQt5.QtWidgets import QShortcut
 
 # --- Subclass QTextEdit to handle Shift+Enter ---
 class CodeTextEdit(QTextEdit):
@@ -155,7 +157,7 @@ class InputLessonWindow(QWidget):
     def load_exercise(self):
         if self.exercise_index < len(EXERCISES):
             ex = EXERCISES[self.exercise_index]
-            self.description_label.setText(ex["description"])
+            self.description_label.setText(f"<b>Exercise {self.exercise_index + 1}: {ex['description']}</b>")
             self.feedback_label.setText("Write your code in the box below and click 'Run & Check' or press Shift + Enter.")
             self.code_input.clear()
         else:
@@ -176,6 +178,11 @@ class InputLessonWindow(QWidget):
 
         self.feedback_label.setText(feedback)
         if correct:
+            QMessageBox.information(
+                self,
+                "Correct",
+                f"Exercise {self.exercise_index + 1} completed correctly!"
+            )
             self.previous_code = full_code
             self.exercise_index += 1
             self.load_exercise()

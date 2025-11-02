@@ -2,10 +2,11 @@ import sys
 import random
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QListWidget, QListWidgetItem,
-    QLabel, QPushButton, QMessageBox, QShortcut
+    QLabel, QPushButton, QMessageBox
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QKeySequence
+from PyQt5.QtWidgets import QShortcut
 
 # --- Parsons Problems ---
 PROBLEMS = [
@@ -49,7 +50,7 @@ class ParsonsWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Parsons Problem Demo")
-        self.resize(700, 600)  # Bigger window
+        self.resize(700, 600)
         self.problem_index = 0
 
         self.layout = QVBoxLayout()
@@ -70,8 +71,6 @@ class ParsonsWindow(QWidget):
         self.list_widget = QListWidget()
         self.list_widget.setFont(QFont("Consolas", 14))
         self.list_widget.setDragDropMode(QListWidget.InternalMove)
-
-        # Style list items: border, padding, rounded corners, highlight
         self.list_widget.setStyleSheet("""
             QListWidget::item {
                 border: 2px solid #555555;
@@ -101,26 +100,43 @@ class ParsonsWindow(QWidget):
 
     def load_problem(self):
         self.list_widget.clear()
-        problem = PROBLEMS[self.problem_index]
-        self.description_label.setText(f"<b>{problem['description']}</b>")
-        self.feedback_label.setText("Drag and drop the lines into the correct order.")
-
-        self.current_lines = shuffled_lines(problem["solution"])
-        for line in self.current_lines:
-            item = QListWidgetItem(line)
-            item.setTextAlignment(Qt.AlignLeft)
-            self.list_widget.addItem(item)
+        if self.problem_index < len(PROBLEMS):
+            problem = PROBLEMS[self.problem_index]
+            problem_number = self.problem_index + 1
+            self.description_label.setText(f"<b>Problem {problem_number}: {problem['description']}</b>")
+            self.feedback_label.setText("Drag and drop the lines into the correct order.")
+            self.current_lines = shuffled_lines(problem["solution"])
+            for line in self.current_lines:
+                item = QListWidgetItem(line)
+                item.setTextAlignment(Qt.AlignLeft)
+                self.list_widget.addItem(item)
+        else:
+            # All problems completed
+            self.description_label.setText("You have completed all problems!")
+            self.feedback_label.setText("")
+            self.list_widget.setDisabled(True)
+            self.check_button.setDisabled(True)
 
     def check_answer(self):
+        if self.problem_index >= len(PROBLEMS):
+            return
         current_order = [self.list_widget.item(i).text() for i in range(self.list_widget.count())]
         solution = PROBLEMS[self.problem_index]["solution"]
         if current_order == solution:
-            QMessageBox.information(self, "Correct", "Correct! Great job!")
+            QMessageBox.information(
+                self,
+                "Correct",
+                f"Correct! You have completed Problem {self.problem_index + 1}."
+            )
             self.problem_index += 1
             if self.problem_index < len(PROBLEMS):
                 self.load_problem()
             else:
-                QMessageBox.information(self, "Finished", "You have completed all problems!")
+                QMessageBox.information(
+                    self,
+                    "Finished",
+                    "You have completed all problems!"
+                )
                 self.close()
         else:
             self.feedback_label.setText("Not quite right. Keep trying!")
