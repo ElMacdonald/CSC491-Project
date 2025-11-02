@@ -25,19 +25,19 @@ class CodeTextEdit(QTextEdit):
 EXERCISES = [
     {
         "type": "variable",
-        "description": "Exercise 1: Create a variable 'x' and assign it the value 10.",
+        "description": "Create a variable 'x' and assign it the value 10.",
         "var_name": "x",
         "expected_value": 10
     },
     {
         "type": "variable",
-        "description": "Exercise 2: Create a variable 'y' and assign it the value of x + 5.",
+        "description": "Create a variable 'y' and assign it the value of x + 5.",
         "var_name": "y",
         "expected_value": 15
     },
     {
         "type": "function",
-        "description": "Exercise 3: Define a function 'add' that takes two numbers and returns their sum.",
+        "description": "Define a function 'add' that takes two numbers and returns their sum.",
         "func_name": "add",
         "test_cases": [((2,3),5), ((-1,5),4), ((0,0),0)]
     }
@@ -158,10 +158,10 @@ class InputLessonWindow(QWidget):
         if self.exercise_index < len(EXERCISES):
             ex = EXERCISES[self.exercise_index]
             self.description_label.setText(f"<b>Exercise {self.exercise_index + 1}: {ex['description']}</b>")
-            self.feedback_label.setText("Write your code in the box below and click 'Run & Check' or press Shift + Enter.")
+            self.feedback_label.setText("Write your code in the box below and click 'Run & Check'.")
             self.code_input.clear()
         else:
-            QMessageBox.information(self, "Lesson Complete", "You have completed all exercises.")
+            QMessageBox.information(self, "Amazing!", "You have completed all exercises.")
             self.close()
 
     def check_code(self):
