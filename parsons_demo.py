@@ -2,10 +2,10 @@ import sys
 import random
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QListWidget, QListWidgetItem,
-    QLabel, QPushButton, QMessageBox
+    QLabel, QPushButton, QMessageBox, QShortcut
 )
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QKeySequence
 
 # --- Parsons Problems ---
 PROBLEMS = [
@@ -92,6 +92,10 @@ class ParsonsWindow(QWidget):
         self.check_button.clicked.connect(self.check_answer)
         self.layout.addWidget(self.check_button)
 
+        # Shortcut: Shift + Enter triggers check_answer
+        shortcut = QShortcut(QKeySequence("Shift+Return"), self)
+        shortcut.activated.connect(self.check_answer)
+
         # Load first problem
         self.load_problem()
 
@@ -111,12 +115,12 @@ class ParsonsWindow(QWidget):
         current_order = [self.list_widget.item(i).text() for i in range(self.list_widget.count())]
         solution = PROBLEMS[self.problem_index]["solution"]
         if current_order == solution:
-            QMessageBox.information(self, "Correct!", "Correct! Great job!")
+            QMessageBox.information(self, "Correct", "Correct! Great job!")
             self.problem_index += 1
             if self.problem_index < len(PROBLEMS):
                 self.load_problem()
             else:
-                QMessageBox.information(self, "Finished", "You've completed all problems!")
+                QMessageBox.information(self, "Finished", "You have completed all problems!")
                 self.close()
         else:
             self.feedback_label.setText("Not quite right. Keep trying!")

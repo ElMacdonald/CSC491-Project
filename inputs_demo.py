@@ -1,8 +1,23 @@
 import sys
 from PyQt5.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QLabel, QTextEdit, QPushButton, QMessageBox
+    QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QMessageBox
 )
 from PyQt5.QtGui import QFont
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QTextEdit
+
+# --- Subclass QTextEdit to handle Shift+Enter ---
+class CodeTextEdit(QTextEdit):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.submit_callback = None  # Function to call on Shift + Enter
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Return and event.modifiers() & Qt.ShiftModifier:
+            if self.submit_callback:
+                self.submit_callback()
+        else:
+            super().keyPressEvent(event)
 
 # --- Example exercises ---
 EXERCISES = [
@@ -16,7 +31,7 @@ EXERCISES = [
         "type": "variable",
         "description": "Exercise 2: Create a variable 'y' and assign it the value of x + 5.",
         "var_name": "y",
-        "expected_value": 15  # assuming x = 10 from previous step
+        "expected_value": 15
     },
     {
         "type": "function",
@@ -39,7 +54,7 @@ def check_variable(student_code, var_name, expected_value):
     
     student_value = safe_locals[var_name]
     if student_value == expected_value:
-        return True, "✅ Perfect!"
+        return True, "Correct!"
     else:
         return False, f"Variable '{var_name}' is defined, but its value is {student_value}. Expected {expected_value}."
 
@@ -70,7 +85,7 @@ def check_function(student_code, func_name, test_cases):
             feedback_messages.append(f"For input {args}, error occurred: {e}")
 
     if success:
-        return True, "✅ Correct! Well done!"
+        return True, "Correct!"
     else:
         return False, " | ".join(feedback_messages)
 
@@ -79,7 +94,7 @@ class InputLessonWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Python Input-Based Lesson")
-        self.resize(700, 600)  # Bigger, more comfortable window
+        self.resize(700, 600)
 
         self.layout = QVBoxLayout()
         self.layout.setSpacing(15)
@@ -91,7 +106,7 @@ class InputLessonWindow(QWidget):
         self.description_label.setFont(QFont("Arial", 18, QFont.Bold))
         self.layout.addWidget(self.description_label)
 
-        # Feedback label (above code box)
+        # Feedback label
         self.feedback_label = QLabel("")
         self.feedback_label.setWordWrap(True)
         self.feedback_label.setFont(QFont("Arial", 14))
@@ -99,7 +114,7 @@ class InputLessonWindow(QWidget):
         self.layout.addWidget(self.feedback_label)
 
         # Code input box
-        self.code_input = QTextEdit()
+        self.code_input = CodeTextEdit()
         self.code_input.setFont(QFont("Consolas", 14))
         self.code_input.setStyleSheet("""
             QTextEdit {
@@ -111,6 +126,9 @@ class InputLessonWindow(QWidget):
         """)
         self.code_input.setPlaceholderText("Type your Python code here...")
         self.layout.addWidget(self.code_input)
+
+        # Connect Shift+Enter to check_code
+        self.code_input.submit_callback = self.check_code
 
         # Submit button
         self.submit_button = QPushButton("Run & Check")
@@ -138,10 +156,10 @@ class InputLessonWindow(QWidget):
         if self.exercise_index < len(EXERCISES):
             ex = EXERCISES[self.exercise_index]
             self.description_label.setText(ex["description"])
-            self.feedback_label.setText("Write your code in the box below and click 'Run & Check'.")
+            self.feedback_label.setText("Write your code in the box below and click 'Run & Check' or press Shift + Enter.")
             self.code_input.clear()
         else:
-            QMessageBox.information(self, "Lesson Complete", "🎉 You've completed all exercises!")
+            QMessageBox.information(self, "Lesson Complete", "You have completed all exercises.")
             self.close()
 
     def check_code(self):
