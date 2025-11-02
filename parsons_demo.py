@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import (
     QLabel, QPushButton, QMessageBox
 )
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont
 
 # --- Parsons Problems ---
 PROBLEMS = [
@@ -48,28 +49,50 @@ class ParsonsWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Parsons Problem Demo")
-        self.setGeometry(100, 100, 500, 400)
+        self.resize(700, 600)  # Bigger window
         self.problem_index = 0
 
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
 
+        # Problem description
         self.description_label = QLabel()
         self.description_label.setWordWrap(True)
+        self.description_label.setFont(QFont("Arial", 16))
         self.layout.addWidget(self.description_label)
 
+        # Feedback label
         self.feedback_label = QLabel()
+        self.feedback_label.setFont(QFont("Arial", 14))
         self.layout.addWidget(self.feedback_label)
 
-        # QListWidget for draggable lines
+        # Draggable list widget
         self.list_widget = QListWidget()
+        self.list_widget.setFont(QFont("Consolas", 14))
         self.list_widget.setDragDropMode(QListWidget.InternalMove)
+
+        # Style list items: border, padding, rounded corners, highlight
+        self.list_widget.setStyleSheet("""
+            QListWidget::item {
+                border: 2px solid #555555;
+                padding: 8px;
+                margin: 2px;
+                border-radius: 5px;
+                background-color: #f0f0f0;
+            }
+            QListWidget::item:selected {
+                background-color: #a0c4ff;
+            }
+        """)
         self.layout.addWidget(self.list_widget)
 
+        # Check answer button
         self.check_button = QPushButton("Check Answer")
+        self.check_button.setFont(QFont("Arial", 14))
         self.check_button.clicked.connect(self.check_answer)
         self.layout.addWidget(self.check_button)
 
+        # Load first problem
         self.load_problem()
 
     def load_problem(self):
@@ -81,6 +104,7 @@ class ParsonsWindow(QWidget):
         self.current_lines = shuffled_lines(problem["solution"])
         for line in self.current_lines:
             item = QListWidgetItem(line)
+            item.setTextAlignment(Qt.AlignLeft)
             self.list_widget.addItem(item)
 
     def check_answer(self):
