@@ -70,6 +70,7 @@ def get_ai_feedback(exercise_desc, student_code):
             "If the correct answer is received, simply congratulate the student and explain why they were correct."
             "Do not use any other information besides the exercise description and student code."
             "Only provide the feedback text without any additional commentary."
+            "Do not just provide the correct answer; focus on guiding the student to understand their mistakes."
         )
         response = CLIENT.models.generate_content(
             model="gemini-2.0-flash",

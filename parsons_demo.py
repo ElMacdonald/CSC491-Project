@@ -7,6 +7,23 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QKeySequence
 from PyQt5.QtWidgets import QShortcut
+from google import genai
+import os
+
+# --- Load API key from file ---
+KEY_FILE = "api_key.txt"  # Make sure this is in .gitignore
+def load_api_key():
+    if os.path.exists(KEY_FILE):
+        with open(KEY_FILE, "r") as f:
+            return f.read().strip()
+    return None
+
+API_KEY = load_api_key()
+if not API_KEY:
+    raise ValueError(f"API key not found in {KEY_FILE}")
+
+# --- Initialize AI client ---
+CLIENT = genai.Client(api_key=API_KEY)
 
 # --- Parsons Problems ---
 PROBLEMS = [
@@ -37,13 +54,41 @@ PROBLEMS = [
     }
 ]
 
-# --- Helper to shuffle lines but never present already solved ---
+# --- Helper to shuffle lines ---
 def shuffled_lines(solution_lines):
     shuffled = solution_lines.copy()
     while True:
         random.shuffle(shuffled)
         if shuffled != solution_lines:
             return shuffled
+
+# --- AI feedback ---
+def get_ai_feedback(problem_desc, student_code_lines, correct=False):
+    try:
+        student_code = "\n".join(student_code_lines)
+        if correct:
+            return f"Correct! Well done! Your code works because it matches the solution for: {problem_desc}"
+
+        prompt = (
+            f"Exercise description:\n{problem_desc}\n\n"
+            f"Student code:\n{student_code}\n\n"
+            "Give very short, simple, friendly feedback for a student aged 8-12. " \
+            "Use easy words and short sentences. " \
+            "Explain what lines are correct, what can be improved, and what to try next. " \
+            "Keep it concise, school-appropriate, and do not use long paragraphs or big words. " \
+            "Do not give the correct answer. " \
+            "If the answer is correct, congratulate the student and explain why it is correct. " \
+            "Treat the student code as rearranged lines in a Parsons problem. " \
+            "Only provide the feedback text, no extra commentary."
+
+        )
+        response = CLIENT.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=prompt
+        )
+        return response.text
+    except Exception as e:
+        return f"(AI Feedback unavailable: {e})"
 
 # --- Main Window ---
 class ParsonsWindow(QWidget):
@@ -62,10 +107,17 @@ class ParsonsWindow(QWidget):
         self.description_label.setFont(QFont("Arial", 16))
         self.layout.addWidget(self.description_label)
 
-        # Feedback label
-        self.feedback_label = QLabel()
-        self.feedback_label.setFont(QFont("Arial", 14))
-        self.layout.addWidget(self.feedback_label)
+        # Instruction label (static)
+        self.instruction_label = QLabel("Drag and drop the lines into the correct order.")
+        self.instruction_label.setFont(QFont("Arial", 14))
+        self.layout.addWidget(self.instruction_label)
+
+        # AI feedback label
+        self.ai_feedback_label = QLabel()
+        self.ai_feedback_label.setFont(QFont("Arial", 14))
+        self.ai_feedback_label.setStyleSheet("color: #333333;")
+        self.ai_feedback_label.setWordWrap(True)
+        self.layout.addWidget(self.ai_feedback_label)
 
         # Draggable list widget
         self.list_widget = QListWidget()
@@ -104,25 +156,29 @@ class ParsonsWindow(QWidget):
             problem = PROBLEMS[self.problem_index]
             problem_number = self.problem_index + 1
             self.description_label.setText(f"<b>Problem {problem_number}: {problem['description']}</b>")
-            self.feedback_label.setText("Drag and drop the lines into the correct order.")
+            self.ai_feedback_label.setText("")  # Clear previous AI feedback
             self.current_lines = shuffled_lines(problem["solution"])
             for line in self.current_lines:
                 item = QListWidgetItem(line)
                 item.setTextAlignment(Qt.AlignLeft)
                 self.list_widget.addItem(item)
         else:
-            # All problems completed
             self.description_label.setText("You have completed all problems!")
-            self.feedback_label.setText("")
             self.list_widget.setDisabled(True)
             self.check_button.setDisabled(True)
 
     def check_answer(self):
         if self.problem_index >= len(PROBLEMS):
             return
+
         current_order = [self.list_widget.item(i).text() for i in range(self.list_widget.count())]
         solution = PROBLEMS[self.problem_index]["solution"]
-        if current_order == solution:
+
+        correct = current_order == solution
+        ai_feedback = get_ai_feedback(PROBLEMS[self.problem_index]["description"], current_order, correct)
+        self.ai_feedback_label.setText(ai_feedback)
+
+        if correct:
             QMessageBox.information(
                 self,
                 "Correct",
@@ -132,14 +188,7 @@ class ParsonsWindow(QWidget):
             if self.problem_index < len(PROBLEMS):
                 self.load_problem()
             else:
-                QMessageBox.information(
-                    self,
-                    "Finished",
-                    "You have completed all problems!"
-                )
                 self.close()
-        else:
-            self.feedback_label.setText("Not quite right. Keep trying!")
 
 # --- Run Application ---
 if __name__ == "__main__":
