@@ -23,11 +23,13 @@ if not API_KEY:
 # --- Initialize AI client ---
 CLIENT = genai.Client(api_key=API_KEY)
 
-# --- Subclass QTextEdit to handle Shift+Enter ---
+# --- Subclass QTextEdit to handle Shift+Enter and smaller tab width ---
 class CodeTextEdit(QTextEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.submit_callback = None
+        # Make tabs visually 4 spaces
+        self.setTabStopDistance(self.fontMetrics().horizontalAdvance('  ') * 4)
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Return and event.modifiers() & Qt.ShiftModifier:
@@ -66,11 +68,10 @@ def get_ai_feedback(exercise_desc, student_code):
             f"Student code:\n{student_code}\n\n"
             "Give very short, simple, friendly feedback for a student aged 8-12. "
             "Use easy words, short sentences. Explain what is correct, what can be improved, and what to try next. "
-            "Keep it concise, school-appropriate, and do not use long paragraphs or big words."
-            "If the correct answer is received, simply congratulate the student and explain why they were correct."
-            "Do not use any other information besides the exercise description and student code."
-            "Only provide the feedback text without any additional commentary."
-            "Do not just provide the correct answer; focus on guiding the student to understand their mistakes."
+            "Keep it concise, school-appropriate, and do not use long paragraphs or big words. "
+            "If the answer is correct, congratulate the student and explain why. "
+            "Only provide the feedback text. Do not restate the question or give the correct answer directly. "
+            "The code is from a parsons-style exercise; treat it as rearranged code lines."
         )
         response = CLIENT.models.generate_content(
             model="gemini-2.0-flash",
@@ -85,7 +86,7 @@ class InputLessonWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Python Input-Based Lesson")
-        self.resize(700, 600)
+        self.resize(1000, 800)
 
         self.layout = QVBoxLayout()
         self.layout.setSpacing(15)
@@ -122,7 +123,7 @@ class InputLessonWindow(QWidget):
         self.code_input.submit_callback = self.check_code
 
         # Submit button
-        self.submit_button = QPushButton("Run & Check")
+        self.submit_button = QPushButton("Run and Check")
         self.submit_button.setFont(QFont("Arial", 16, QFont.Bold))
         self.submit_button.setStyleSheet("""
             QPushButton {
@@ -172,7 +173,7 @@ class InputLessonWindow(QWidget):
         except Exception:
             correct = False
 
-        # AI feedback
+        # AI feedback only
         ai_feedback = get_ai_feedback(ex['description'], full_code)
         self.ai_feedback_label.setText(f"AI Feedback:\n{ai_feedback}")
 

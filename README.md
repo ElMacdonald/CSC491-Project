@@ -32,10 +32,11 @@ This project is a prototype for an educational game that teaches middle school s
 - Python 3.10 +  
    - [Windows](https://www.python.org/downloads/windows)
    - [MacOS](https://www.python.org/downloads/macos)
-- [PyQt5](https://pypi.org/project/PyQt5/)  
 - Internet connection for AI feedback (access to Google Gemini 2.0 API)
-
-Alternatively, Install PyQt5 using pip (easier method):
-
+- Run the following commands in a PowerShell terminal with Python installed:
 ```bash
+pip install google-genainatively
+
 pip install PyQt5
+```
+*These allow for the AI to function properly, and for the Graphical User Interface (GUI) to work.*
