@@ -67,6 +67,9 @@ def get_ai_feedback(exercise_desc, student_code):
             "Give very short, simple, friendly feedback for a student aged 8-12. "
             "Use easy words, short sentences. Explain what is correct, what can be improved, and what to try next. "
             "Keep it concise, school-appropriate, and do not use long paragraphs or big words."
+            "If the correct answer is received, simply congratulate the student and explain why they were correct."
+            "Do not use any other information besides the exercise description and student code."
+            "Only provide the feedback text without any additional commentary."
         )
         response = CLIENT.models.generate_content(
             model="gemini-2.0-flash",
