@@ -85,7 +85,7 @@ def get_ai_feedback(exercise_desc, student_code):
 class InputLessonWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Python Input-Based Lesson")
+        self.setWindowTitle("Input-Based Demo")
         self.resize(1000, 800)
 
         self.layout = QVBoxLayout()
