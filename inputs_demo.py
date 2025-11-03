@@ -1,18 +1,33 @@
 import sys
 from PyQt5.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QMessageBox
+    QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QMessageBox, QTextEdit
 )
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QTextEdit
-from PyQt5.QtGui import QKeySequence
-from PyQt5.QtWidgets import QShortcut
+from google import genai
+import os
+
+# --- Load API key from file ---
+KEY_FILE = "api_key.txt"  # Make sure this is in .gitignore
+
+def load_api_key():
+    if os.path.exists(KEY_FILE):
+        with open(KEY_FILE, "r") as f:
+            return f.read().strip()
+    return None
+
+API_KEY = load_api_key()
+if not API_KEY:
+    raise ValueError(f"API key not found in {KEY_FILE}")
+
+# --- Initialize AI client ---
+CLIENT = genai.Client(api_key=API_KEY)
 
 # --- Subclass QTextEdit to handle Shift+Enter ---
 class CodeTextEdit(QTextEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.submit_callback = None  # Function to call on Shift + Enter
+        self.submit_callback = None
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Return and event.modifiers() & Qt.ShiftModifier:
@@ -43,53 +58,23 @@ EXERCISES = [
     }
 ]
 
-# --- Helper functions ---
-def check_variable(student_code, var_name, expected_value):
-    safe_locals = {}
+# --- AI feedback ---
+def get_ai_feedback(exercise_desc, student_code):
     try:
-        exec(student_code, {}, safe_locals)
+        prompt = (
+            f"Exercise description:\n{exercise_desc}\n\n"
+            f"Student code:\n{student_code}\n\n"
+            "Give very short, simple, friendly feedback for a student aged 8-12. "
+            "Use easy words, short sentences. Explain what is correct, what can be improved, and what to try next. "
+            "Keep it concise, school-appropriate, and do not use long paragraphs or big words."
+        )
+        response = CLIENT.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=prompt
+        )
+        return response.text
     except Exception as e:
-        return False, f"Error in your code: {e}"
-
-    if var_name not in safe_locals:
-        return False, f"Variable '{var_name}' is not defined."
-    
-    student_value = safe_locals[var_name]
-    if student_value == expected_value:
-        return True, "Correct!"
-    else:
-        return False, f"Variable '{var_name}' is defined, but its value is {student_value}. Expected {expected_value}."
-
-def check_function(student_code, func_name, test_cases):
-    safe_locals = {}
-    try:
-        exec(student_code, {}, safe_locals)
-    except Exception as e:
-        return False, f"Error in your code: {e}"
-
-    if func_name not in safe_locals or not callable(safe_locals[func_name]):
-        return False, f"Function '{func_name}' is not defined correctly."
-
-    func = safe_locals[func_name]
-    success = True
-    feedback_messages = []
-
-    for args, expected in test_cases:
-        try:
-            result = func(*args)
-            if result != expected:
-                success = False
-                feedback_messages.append(
-                    f"For input {args}, expected {expected}, got {result}."
-                )
-        except Exception as e:
-            success = False
-            feedback_messages.append(f"For input {args}, error occurred: {e}")
-
-    if success:
-        return True, "Correct!"
-    else:
-        return False, " | ".join(feedback_messages)
+        return f"(AI Feedback unavailable: {e})"
 
 # --- PyQt5 GUI ---
 class InputLessonWindow(QWidget):
@@ -108,12 +93,12 @@ class InputLessonWindow(QWidget):
         self.description_label.setFont(QFont("Arial", 18, QFont.Bold))
         self.layout.addWidget(self.description_label)
 
-        # Feedback label
-        self.feedback_label = QLabel("")
-        self.feedback_label.setWordWrap(True)
-        self.feedback_label.setFont(QFont("Arial", 14))
-        self.feedback_label.setStyleSheet("color: #333333;")
-        self.layout.addWidget(self.feedback_label)
+        # AI feedback label
+        self.ai_feedback_label = QLabel("")
+        self.ai_feedback_label.setWordWrap(True)
+        self.ai_feedback_label.setFont(QFont("Arial", 14))
+        self.ai_feedback_label.setStyleSheet("color: #333333;")
+        self.layout.addWidget(self.ai_feedback_label)
 
         # Code input box
         self.code_input = CodeTextEdit()
@@ -158,7 +143,7 @@ class InputLessonWindow(QWidget):
         if self.exercise_index < len(EXERCISES):
             ex = EXERCISES[self.exercise_index]
             self.description_label.setText(f"<b>Exercise {self.exercise_index + 1}: {ex['description']}</b>")
-            self.feedback_label.setText("Write your code in the box below and click 'Run & Check'.")
+            self.ai_feedback_label.setText("")
             self.code_input.clear()
         else:
             QMessageBox.information(self, "Amazing!", "You have completed all exercises.")
@@ -169,14 +154,24 @@ class InputLessonWindow(QWidget):
         full_code = self.previous_code + "\n" + student_code
         ex = EXERCISES[self.exercise_index]
 
-        if ex["type"] == "variable":
-            correct, feedback = check_variable(full_code, ex["var_name"], ex["expected_value"])
-        elif ex["type"] == "function":
-            correct, feedback = check_function(full_code, ex["func_name"], ex["test_cases"])
-        else:
-            correct, feedback = False, "Unknown exercise type."
+        # Evaluate correctness
+        correct = False
+        try:
+            safe_locals = {}
+            exec(full_code, {}, safe_locals)
+            if ex["type"] == "variable":
+                correct = (safe_locals.get(ex["var_name"], None) == ex["expected_value"])
+            elif ex["type"] == "function":
+                func = safe_locals.get(ex["func_name"], None)
+                if callable(func):
+                    correct = all(func(*args) == expected for args, expected in ex["test_cases"])
+        except Exception:
+            correct = False
 
-        self.feedback_label.setText(feedback)
+        # AI feedback
+        ai_feedback = get_ai_feedback(ex['description'], full_code)
+        self.ai_feedback_label.setText(f"AI Feedback:\n{ai_feedback}")
+
         if correct:
             QMessageBox.information(
                 self,
