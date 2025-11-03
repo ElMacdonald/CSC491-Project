@@ -95,7 +95,7 @@ class ParsonsWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Parsons Problem Demo")
-        self.resize(1000, 800)
+        self.resize(1200, 1000)
         self.problem_index = 0
 
         self.layout = QVBoxLayout()
