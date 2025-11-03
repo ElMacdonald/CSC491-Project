@@ -4,33 +4,38 @@ This project is a prototype for an educational game that teaches middle school s
 
 1. **Parsons Problems**  
    - A drag-and-drop interface where students reorder lines of Python code to form a correct program.  
-   - Provides instant feedback on whether the solution is correct.  
+   - Provides instant AI-powered feedback on whether the solution is correct.  
    - Encourages logical thinking and understanding of Python syntax without enforcing a single coding style.
 
 2. **Input-Based Exercises**  
    - A windowed interface where students can write Python code freely in a text box.  
    - Supports multi-line input, including variable assignments and function definitions.  
    - Code is executed in a restricted namespace, and the system checks behavior/output rather than the exact syntax.  
-   - Feedback is provided for each exercise, and students progress through a sequence of exercises.
+   - AI-powered feedback guides students on what they did correctly, what can be improved, and next steps.  
+   - Students progress through a sequence of exercises, building on previous code.
 
 ---
 
 ## Features
 
-- **Windowed GUI:** Students do not need to interact with the terminal.
-- **Multiple exercises:** Sequential progression from simple variable assignments to basic function creation.
-- **Lenient evaluation:** Students can be creative, as long as the code behaves as expected.
-- **Cumulative context:** Previous exercises carry over, so students can reference earlier code.
+- **AI-Powered Feedback:** Uses Google’s Gemini 2.0 model to provide short, friendly, and age-appropriate guidance for each exercise.  
+- **Windowed GUI:** Students do not need to interact with the terminal.  
+- **Multiple exercises:** Sequential progression from simple variable assignments to basic function creation.  
+- **Lenient evaluation:** Students can be creative, as long as the code behaves as expected.  
+- **Cumulative context:** Previous exercises carry over, so students can reference earlier code.  
 - **Clean, polished interface:** Large fonts, bordered code input, highlighted buttons, and clear feedback areas.
 
 ---
 
 ## Requirements
 
-- Python 3.10+  
-- [PyQt5](https://pypi.org/project/PyQt5/)
+- Python 3.10 +  
+   - [Windows](https://www.python.org/downloads/windows)
+   - [MacOS](https://www.python.org/downloads/macos)
+- [PyQt5](https://pypi.org/project/PyQt5/)  
+- Internet connection for AI feedback (access to Google Gemini 2.0 API)
 
-Install PyQt5 using pip:
+Alternatively, Install PyQt5 using pip (easier method):
 
 ```bash
 pip install PyQt5
