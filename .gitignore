@@ -25,3 +25,4 @@ replay_pid*
 
 # Ignore API key file
 api_key.txt
+progress.txt
