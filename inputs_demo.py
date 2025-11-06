@@ -1,11 +1,11 @@
 import sys
+import os
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QMessageBox, QTextEdit
 )
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 from google import genai
-import os
 
 # --- Load API key from file ---
 KEY_FILE = "api_key.txt"  # Make sure this is in .gitignore
@@ -28,7 +28,6 @@ class CodeTextEdit(QTextEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.submit_callback = None
-        # Make tabs visually 4 spaces
         self.setTabStopDistance(self.fontMetrics().horizontalAdvance('  ') * 4)
 
     def keyPressEvent(self, event):
@@ -38,7 +37,7 @@ class CodeTextEdit(QTextEdit):
         else:
             super().keyPressEvent(event)
 
-# --- Example exercises ---
+# --- Exercises ---
 EXERCISES = [
     {
         "type": "variable",
@@ -70,8 +69,7 @@ def get_ai_feedback(exercise_desc, student_code):
             "Use easy words, short sentences. Explain what is correct, what can be improved, and what to try next. "
             "Keep it concise, school-appropriate, and do not use long paragraphs or big words. "
             "If the answer is correct, congratulate the student and explain why. "
-            "Only provide the feedback text. Do not restate the question or give the correct answer directly. "
-            "The code is from a parsons-style exercise; treat it as rearranged code lines."
+            "Only provide the feedback text. Do not restate the question or give the correct answer directly."
         )
         response = CLIENT.models.generate_content(
             model="gemini-2.0-flash",
@@ -81,12 +79,67 @@ def get_ai_feedback(exercise_desc, student_code):
     except Exception as e:
         return f"(AI Feedback unavailable: {e})"
 
-# --- PyQt5 GUI ---
+
+# --- Progress tracking ---
+PROGRESS_FILE = "inputsprogress.txt"
+
+def load_progress():
+    progress = {}
+    last_unfinished = 0
+    if os.path.exists(PROGRESS_FILE):
+        with open(PROGRESS_FILE, "r") as f:
+            lines = f.read().splitlines()
+
+        current_q = None
+        for line in lines:
+            line = line.strip()
+            if line.lower().startswith("question"):
+                num = ''.join(ch for ch in line if ch.isdigit())
+                if num.isdigit():
+                    current_q = int(num)
+                    progress[current_q] = {"attempts": [], "completed": False}
+            elif line.startswith("Attempt") and current_q is not None:
+                attempt_text = line.split(":", 1)[1].strip()
+                progress[current_q]["attempts"].append(attempt_text)
+            elif line.lower().startswith("incomplete") and current_q is not None:
+                progress[current_q]["completed"] = False
+
+        # find the first unfinished question
+        for q in range(1, len(EXERCISES)+1):
+            if q not in progress or not progress[q].get("completed", False):
+                last_unfinished = q - 1 if q > 1 else 0
+                break
+        else:
+            last_unfinished = len(EXERCISES)
+    return progress, last_unfinished
+
+def save_progress(progress):
+    with open(PROGRESS_FILE, "w") as f:
+        for q in range(1, len(EXERCISES)+1):
+            f.write(f"Question {q}:\n")
+            if q in progress:
+                attempts = progress[q]["attempts"]
+                if attempts:
+                    for i, att in enumerate(attempts, start=1):
+                        f.write(f"Attempt {i}: {att}\n")
+                if not progress[q].get("completed", False) and not attempts:
+                    f.write("Incomplete\n")
+            else:
+                f.write("Incomplete\n")
+            f.write("\n")  # blank line between questions
+
+
+# --- Main Window ---
 class InputLessonWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Input-Based Demo")
         self.resize(1200, 1000)
+
+        # Load progress and determine where to resume
+        self.progress, last_unfinished = load_progress()
+        self.exercise_index = last_unfinished
+        self.previous_code = ""
 
         self.layout = QVBoxLayout()
         self.layout.setSpacing(15)
@@ -119,7 +172,7 @@ class InputLessonWindow(QWidget):
         self.code_input.setPlaceholderText("Type your Python code here...")
         self.layout.addWidget(self.code_input)
 
-        # Connect Shift+Enter to check_code
+        # Connect Shift+Enter
         self.code_input.submit_callback = self.check_code
 
         # Submit button
@@ -139,9 +192,6 @@ class InputLessonWindow(QWidget):
         self.submit_button.clicked.connect(self.check_code)
         self.layout.addWidget(self.submit_button)
 
-        # Lesson tracking
-        self.exercise_index = 0
-        self.previous_code = ""
         self.load_exercise()
 
     def load_exercise(self):
@@ -151,7 +201,7 @@ class InputLessonWindow(QWidget):
             self.ai_feedback_label.setText("")
             self.code_input.clear()
         else:
-            QMessageBox.information(self, "Amazing!", "You have completed all exercises.")
+            QMessageBox.information(self, "Great job!", "You have completed all exercises!")
             self.close()
 
     def check_code(self):
@@ -173,9 +223,20 @@ class InputLessonWindow(QWidget):
         except Exception:
             correct = False
 
-        # AI feedback only
+        # AI feedback
         ai_feedback = get_ai_feedback(ex['description'], full_code)
         self.ai_feedback_label.setText(f"AI Feedback:\n{ai_feedback}")
+
+        # Record progress
+        q_num = self.exercise_index + 1
+        if q_num not in self.progress:
+            self.progress[q_num] = {"attempts": [], "completed": False}
+
+        self.progress[q_num]["attempts"].append(student_code)
+        if correct:
+            self.progress[q_num]["completed"] = True
+
+        save_progress(self.progress)
 
         if correct:
             QMessageBox.information(
@@ -186,6 +247,7 @@ class InputLessonWindow(QWidget):
             self.previous_code = full_code
             self.exercise_index += 1
             self.load_exercise()
+
 
 # --- Run Application ---
 if __name__ == "__main__":
