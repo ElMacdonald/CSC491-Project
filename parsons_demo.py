@@ -122,18 +122,22 @@ def load_progress():
 
 def save_progress(progress):
     with open(PROGRESS_FILE, "w") as f:
-        for q in range(1, len(PROBLEMS)+1):
+        for q in range(1, len(PROBLEMS) + 1):
             f.write(f"{q}:\n")
             if q in progress:
                 attempts = progress[q]["attempts"]
                 if attempts:
                     for i, att in enumerate(attempts, start=1):
-                        f.write(f"Attempt {i}: {att}\n")
+                        f.write(f"Attempt {i}:\n")  # newline after "Attempt X:"
+                        # Write each line of the attempt indented slightly for readability
+                        for line in att.split("\n"):
+                            f.write(f"{line}\n")
                 if not progress[q].get("completed", False) and not attempts:
                     f.write("Incomplete\n")
             else:
                 f.write("Incomplete\n")
             f.write("\n")  # blank line between questions
+
 
 # --- Main Window ---
 class ParsonsWindow(QWidget):
