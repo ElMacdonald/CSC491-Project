@@ -81,7 +81,7 @@ def get_ai_feedback(exercise_desc, student_code):
 
 
 # --- Progress tracking ---
-PROGRESS_FILE = "inputsprogress.txt"
+PROGRESS_FILE = "inputs_progress.txt"
 
 def load_progress():
     progress = {}
@@ -115,13 +115,16 @@ def load_progress():
 
 def save_progress(progress):
     with open(PROGRESS_FILE, "w") as f:
-        for q in range(1, len(EXERCISES)+1):
-            f.write(f"Question {q}:\n")
+        for q in range(1, len(EXERCISES) + 1):
+            f.write(f"{q}:\n")
             if q in progress:
                 attempts = progress[q]["attempts"]
                 if attempts:
                     for i, att in enumerate(attempts, start=1):
-                        f.write(f"Attempt {i}: {att}\n")
+                        f.write(f"Attempt {i}:\n")  # newline after "Attempt X:"
+                        # Write each line of the attempt indented slightly for readability
+                        for line in att.split("\n"):
+                            f.write(f"{line}\n")
                 if not progress[q].get("completed", False) and not attempts:
                     f.write("Incomplete\n")
             else:

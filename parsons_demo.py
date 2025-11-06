@@ -89,7 +89,7 @@ def get_ai_feedback(problem_desc, student_code_lines, correct=False):
         return f"(AI Feedback unavailable: {e})"
 
 # --- Progress tracking ---
-PROGRESS_FILE = "parsonsprogress.txt"
+PROGRESS_FILE = "parsons_progress.txt"
 
 def load_progress():
     progress = {}
