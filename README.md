@@ -35,7 +35,7 @@ This project is a prototype for an educational game that teaches middle school s
 - Internet connection for AI feedback (access to Google Gemini 2.0 API)
 - Run the following commands in a PowerShell terminal with Python installed:
 ```bash
-pip install google-genainatively
+pip install google-genai
 
 pip install PyQt5
 ```
