@@ -129,9 +129,13 @@ def save_progress(progress):
                 if attempts:
                     for i, att in enumerate(attempts, start=1):
                         f.write(f"Attempt {i}:\n")  # newline after "Attempt X:"
-                        # Write each line of the attempt indented slightly for readability
                         for line in att.split("\n"):
                             f.write(f"{line}\n")
+                        # --- ADDED: Save AI feedback after attempt ---
+                        feedback_key = f"{q}_attempt_{i}_feedback"
+                        if feedback_key in progress[q]:
+                            f.write(f"\nAI Feedback:\n{progress[q][feedback_key]}\n")
+                        f.write("\n")
                 if not progress[q].get("completed", False) and not attempts:
                     f.write("Incomplete\n")
             else:
@@ -235,6 +239,10 @@ class ParsonsWindow(QWidget):
         if q_num not in self.progress:
             self.progress[q_num] = {"attempts": [], "completed": False}
         self.progress[q_num]["attempts"].append("\n".join(current_order))
+        # --- ADDED: Store AI feedback text for this attempt ---
+        attempt_index = len(self.progress[q_num]["attempts"])
+        self.progress[q_num][f"{q_num}_attempt_{attempt_index}_feedback"] = ai_feedback
+
         if correct:
             self.progress[q_num]["completed"] = True
 

@@ -121,10 +121,14 @@ def save_progress(progress):
                 attempts = progress[q]["attempts"]
                 if attempts:
                     for i, att in enumerate(attempts, start=1):
-                        f.write(f"Attempt {i}:\n")  # newline after "Attempt X:"
-                        # Write each line of the attempt indented slightly for readability
+                        f.write(f"Attempt {i}:\n")
                         for line in att.split("\n"):
                             f.write(f"{line}\n")
+                        # --- ADDED: Save AI feedback after attempt ---
+                        feedback_key = f"{q}_attempt_{i}_feedback"
+                        if feedback_key in progress[q]:
+                            f.write(f"\nAI Feedback:\n{progress[q][feedback_key]}\n")
+                        f.write("\n")
                 if not progress[q].get("completed", False) and not attempts:
                     f.write("Incomplete\n")
             else:
@@ -236,6 +240,10 @@ class InputLessonWindow(QWidget):
             self.progress[q_num] = {"attempts": [], "completed": False}
 
         self.progress[q_num]["attempts"].append(student_code)
+        # --- ADDED: Store AI feedback text for this attempt ---
+        attempt_index = len(self.progress[q_num]["attempts"])
+        self.progress[q_num][f"{q_num}_attempt_{attempt_index}_feedback"] = ai_feedback
+
         if correct:
             self.progress[q_num]["completed"] = True
 
