@@ -5,29 +5,88 @@ using UnityEngine;
 public class Movement : MonoBehaviour
 {
     private float horizontal;
-    private bool midMovement = false;
+    private string moveState = "idle";
     private SpriteRenderer spr;
     public Sprite[] sprites;
 
+    public Sprite[] rightWalkingSprites;
+    public Sprite[] leftWalkingSprites;
+    public Sprite[] jumpingSprites;
+    public Sprite[] idleSprites;
 
+    public float jumpTimer;
+    public float jumpDelay;
+
+    public float landDelay = .1f;
+    public float landTimer;
+
+    public float timeBetweenFrames = 0.1f;
+    public float timer = 0f;
+    public int currentFrame = 0;
+
+    public float floatAmplitude = 0.05f;
+    public float floatFrequency = 6f;
+    private Vector3 basePos;
 
     void Start(){
-        spr = gameObject.GetComponent<SpriteRenderer>();
+        spr = GetComponent<SpriteRenderer>();
+        basePos = transform.position;
     }
 
-    public void ChangeSprite(int index){
-        spr.sprite = sprites[index];
+    void Update(){
+        jumpTimer += Time.deltaTime;
+        handleAnims();
+        if(moveState != "jumping"){
+            landTimer += Time.deltaTime;
+            if(landTimer >= landDelay){
+            Vector3 p = basePos;
+            p.y += Mathf.Sin(Time.time * floatFrequency) * floatAmplitude;
+            transform.position = new Vector3(transform.position.x, p.y, transform.position.z);
+            }
+        }else{
+            landTimer = 0f;
+        }
+        
+
+        Ray2D ray = new Ray2D(transform.position, Vector2.down);
+        RaycastHit2D hit = Physics2D.Raycast(ray.origin, ray.direction, 2f);
+        Debug.DrawRay(ray.origin, ray.direction * 1.5f, Color.red);
+
+        if(hit.collider != null && hit.collider.tag == "Ground" && moveState == "jumping" && jumpTimer > jumpDelay){
+            moveState = "idle";
+            timer = 1;
+        }
     }
-    //Starts coroutine to move character to the left for 1 second
+
+    public void handleAnims(){
+        timer += Time.deltaTime;
+        if(timer >= timeBetweenFrames){
+            timer = 0f;
+            currentFrame = (currentFrame + 1) % 4;
+            switch(moveState){
+                case "left walk":
+                    spr.sprite = leftWalkingSprites[currentFrame];
+                    break;
+                case "right walk":
+                    spr.sprite = rightWalkingSprites[currentFrame];
+                    break;
+                case "jumping":
+                    spr.sprite = jumpingSprites[currentFrame];
+                    break;
+                case "idle":
+                    spr.sprite = idleSprites[currentFrame];
+                    break;
+            }
+        }
+    }
+
     public void MoveLeft(float distance){
-        midMovement = true;
-        spr.flipX = true;
+        moveState = "left walk";
         StartCoroutine(MoveCharacter(Vector3.left, distance));
     }
-    //Starts coroutine to move character to the right for 1 second
+
     public void MoveRight(float distance){
-        spr.flipX = false;
-        midMovement = true;
+        moveState = "right walk";
         StartCoroutine(MoveCharacter(Vector3.right, distance));
     }
 
@@ -38,33 +97,33 @@ public class Movement : MonoBehaviour
     }
 
     public void JumpRight(float distance, float height){
-        midMovement = true;
-        spr.flipX = false;
         StartCoroutine(MoveCharacter(Vector3.right, distance));
         Jump(height);
     }
 
     public void JumpLeft(float distance, float height){
-        midMovement = true;
-        spr.flipX = true;
         StartCoroutine(MoveCharacter(Vector3.left, distance));
         Jump(height);
     }
 
     private IEnumerator MoveCharacter(Vector3 direction, float distance){
         float moved = 0f;
-        float speed = distance; // Move the entire distance in 1 second
+        timer = 1f; //force frame change
+        float speed = distance;
         while(moved < distance){
             float step = speed * Time.deltaTime;
             transform.Translate(direction * step);
             moved += step;
             yield return null;
         }
-        midMovement = false;
+        moveState = "idle";
     }
 
     public void Jump(float height){
-        gameObject.GetComponent<Rigidbody2D>().AddForce(new Vector2(0, height), ForceMode2D.Impulse);
+        jumpTimer = 0f;
+        timer = 1f;
+        GetComponent<Rigidbody2D>().velocity = new Vector2(GetComponent<Rigidbody2D>().velocity.x, 0);
+        GetComponent<Rigidbody2D>().AddForce(new Vector2(0, height), ForceMode2D.Impulse);
+        moveState = "jumping";
     }
-
 }

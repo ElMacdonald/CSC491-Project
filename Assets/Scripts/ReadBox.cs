@@ -36,7 +36,7 @@ public class ReadBox : MonoBehaviour
     IEnumerator PerformActions()
     {
         failed = false;
-        playerMovement.ChangeSprite(0);
+        //playerMovement.ChangeSprite(0);
         int counter = 0;
         codeLines[counter].color = Color.yellow;
         foreach (string line in textLines)
@@ -109,7 +109,7 @@ public class ReadBox : MonoBehaviour
                 continue;
             }
             // If no command matched, wait for 1 second
-            playerMovement.ChangeSprite(3);
+            //playerMovement.ChangeSprite(3);
             codeLines[counter-1].color = Color.red;
             
 
@@ -118,10 +118,10 @@ public class ReadBox : MonoBehaviour
             break;
         }
         if(!failed)
-        playerMovement.ChangeSprite(2);
+        //playerMovement.ChangeSprite(2);
         
         yield return new WaitForSeconds(1f);
-        playerMovement.ChangeSprite(1);
+        //playerMovement.ChangeSprite(1);
 
         foreach(var codeLine in codeLines){
             codeLine.color = Color.white;
