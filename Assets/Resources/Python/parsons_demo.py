@@ -10,19 +10,23 @@ from PyQt5.QtGui import QFont, QKeySequence
 import google.generativeai as genai
 
 # --- Load API key from file ---
-KEY_FILE = "api_key.txt"  # Make sure this is in .gitignore
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+KEY_FILE = os.path.join(SCRIPT_DIR, "api_key.txt")
+
 def load_api_key():
     if os.path.exists(KEY_FILE):
         with open(KEY_FILE, "r") as f:
             return f.read().strip()
     return None
 
+
 API_KEY = load_api_key()
 if not API_KEY:
     raise ValueError(f"API key not found in {KEY_FILE}")
 
-# --- Initialize AI client ---
-CLIENT = genai.Client(api_key=API_KEY)
+# --- Initialize AI client (FIXED) ---
+genai.configure(api_key=API_KEY)
+MODEL = genai.GenerativeModel("gemini-2.0-flash")
 
 # --- Parsons Problems ---
 PROBLEMS = [
@@ -61,10 +65,11 @@ def shuffled_lines(solution_lines):
         if shuffled != solution_lines:
             return shuffled
 
-# --- AI feedback ---
+# --- AI feedback (FIXED) ---
 def get_ai_feedback(problem_desc, student_code_lines, correct=False):
     try:
         student_code = "\n".join(student_code_lines)
+
         if correct:
             return f"Correct! Well done! Your code works because it matches the solution for: {problem_desc}"
 
@@ -80,13 +85,13 @@ def get_ai_feedback(problem_desc, student_code_lines, correct=False):
             "Treat the student code as rearranged lines in a Parsons problem. "
             "Only provide the feedback text, no extra commentary."
         )
-        response = CLIENT.models.generate_content(
-            model="gemini-2.0-flash",
-            contents=prompt
-        )
+
+        response = MODEL.generate_content(prompt)
         return response.text
+
     except Exception as e:
         return f"(AI Feedback unavailable: {e})"
+
 
 # --- Progress tracking ---
 PROGRESS_FILE = "parsons_progress.txt"
@@ -113,7 +118,7 @@ def load_progress():
         # Find first unfinished question
         for q in range(1, len(PROBLEMS)+1):
             if q not in progress or not progress[q]["completed"]:
-                last_unfinished = q-1 if q>1 else 0
+                last_unfinished = q - 1 if q > 1 else 0
                 break
         else:
             last_unfinished = len(PROBLEMS)
@@ -128,91 +133,74 @@ def save_progress(progress):
                 attempts = progress[q]["attempts"]
                 if attempts:
                     for i, att in enumerate(attempts, start=1):
-                        f.write(f"Attempt {i}:\n")  # newline after "Attempt X:"
+                        f.write(f"Attempt {i}:\n")
                         for line in att.split("\n"):
                             f.write(f"{line}\n")
-                        # --- ADDED: Save AI feedback after attempt ---
+
                         feedback_key = f"{q}_attempt_{i}_feedback"
                         if feedback_key in progress[q]:
                             f.write(f"\nAI Feedback:\n{progress[q][feedback_key]}\n")
                         f.write("\n")
+
                 if not progress[q].get("completed", False) and not attempts:
                     f.write("Incomplete\n")
             else:
                 f.write("Incomplete\n")
-            f.write("\n")  # blank line between questions
+
+            f.write("\n")
 
 
-# --- Main Window ---
+# --- GUI Window ---
 class ParsonsWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Parsons Problem Demo")
         self.resize(1200, 1000)
 
-        # --- Load progress ---
+        # Load progress
         self.progress, last_unfinished = load_progress()
         self.problem_index = last_unfinished
 
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
 
-        # Problem description
         self.description_label = QLabel()
         self.description_label.setWordWrap(True)
         self.description_label.setFont(QFont("Arial", 16))
         self.layout.addWidget(self.description_label)
 
-        # Instruction label
         self.instruction_label = QLabel("Drag and drop the lines into the correct order.")
         self.instruction_label.setFont(QFont("Arial", 14))
         self.layout.addWidget(self.instruction_label)
 
-        # AI feedback label
         self.ai_feedback_label = QLabel()
         self.ai_feedback_label.setFont(QFont("Arial", 14))
-        self.ai_feedback_label.setStyleSheet("color: #333333;")
         self.ai_feedback_label.setWordWrap(True)
+        self.ai_feedback_label.setStyleSheet("color: #333333;")
         self.layout.addWidget(self.ai_feedback_label)
 
-        # Draggable list widget
         self.list_widget = QListWidget()
         self.list_widget.setFont(QFont("Consolas", 14))
         self.list_widget.setDragDropMode(QListWidget.InternalMove)
-        self.list_widget.setStyleSheet("""
-            QListWidget::item {
-                border: 2px solid #555555;
-                padding: 8px;
-                margin: 2px;
-                border-radius: 5px;
-                background-color: #f0f0f0;
-            }
-            QListWidget::item:selected {
-                background-color: #a0c4ff;
-            }
-        """)
         self.layout.addWidget(self.list_widget)
 
-        # Check answer button
         self.check_button = QPushButton("Check Answer")
         self.check_button.setFont(QFont("Arial", 14))
         self.check_button.clicked.connect(self.check_answer)
         self.layout.addWidget(self.check_button)
 
-        # Shortcut: Shift + Enter triggers check_answer
         shortcut = QShortcut(QKeySequence("Shift+Return"), self)
         shortcut.activated.connect(self.check_answer)
 
-        # Load first problem
         self.load_problem()
 
     def load_problem(self):
         self.list_widget.clear()
         if self.problem_index < len(PROBLEMS):
             problem = PROBLEMS[self.problem_index]
-            problem_number = self.problem_index + 1
-            self.description_label.setText(f"<b>Problem {problem_number}: {problem['description']}</b>")
-            self.ai_feedback_label.setText("")  # Clear previous feedback
+            num = self.problem_index + 1
+            self.description_label.setText(f"<b>Problem {num}: {problem['description']}</b>")
+            self.ai_feedback_label.setText("")
             self.current_lines = shuffled_lines(problem["solution"])
             for line in self.current_lines:
                 item = QListWidgetItem(line)
@@ -234,12 +222,13 @@ class ParsonsWindow(QWidget):
         ai_feedback = get_ai_feedback(PROBLEMS[self.problem_index]["description"], current_order, correct)
         self.ai_feedback_label.setText(ai_feedback)
 
-        # --- Record attempt ---
         q_num = self.problem_index + 1
+
         if q_num not in self.progress:
             self.progress[q_num] = {"attempts": [], "completed": False}
+
         self.progress[q_num]["attempts"].append("\n".join(current_order))
-        # --- ADDED: Store AI feedback text for this attempt ---
+
         attempt_index = len(self.progress[q_num]["attempts"])
         self.progress[q_num][f"{q_num}_attempt_{attempt_index}_feedback"] = ai_feedback
 
@@ -251,8 +240,8 @@ class ParsonsWindow(QWidget):
         if correct:
             QMessageBox.information(
                 self,
-                "Correct",
-                f"Correct! You have completed Problem {self.problem_index + 1}."
+                "Correct!",
+                f"You finished Problem {self.problem_index + 1}."
             )
             self.problem_index += 1
             if self.problem_index < len(PROBLEMS):
@@ -260,7 +249,8 @@ class ParsonsWindow(QWidget):
             else:
                 self.close()
 
-# --- Run Application ---
+
+# --- Run ---
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = ParsonsWindow()
