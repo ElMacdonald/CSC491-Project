@@ -36,6 +36,7 @@ public class ReadBox : MonoBehaviour
 
     IEnumerator PerformActions()
     {
+        ts.LoadTextFile();
         failed = false;
         //playerMovement.ChangeSprite(0);
         int counter = 0;
@@ -128,7 +129,7 @@ public class ReadBox : MonoBehaviour
             codeLine.color = Color.white;
         }
 
-        ts.LoadTextFile();
+        
     }
     
 }

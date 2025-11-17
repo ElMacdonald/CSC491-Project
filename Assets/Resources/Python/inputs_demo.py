@@ -20,6 +20,7 @@ def load_api_key():
 
 
 API_KEY = load_api_key()
+print("key loaded")
 
 # ---- INITIALIZE AI (exactly like your working code) ----
 genai.configure(api_key=API_KEY)
@@ -91,6 +92,10 @@ You MUST follow these rules exactly:
 
 8. Keep the feedback VERY short, friendly, and kid-safe.
 
+9. Keep the preamble to a minimum.
+
+10. Do NOT use the sample solution code in your response.
+
 You must ONLY produce the required three sections and nothing else.
 """
 
@@ -126,3 +131,4 @@ def run_evaluator():
 
 if __name__ == "__main__":
     run_evaluator()
+    print("Evaluator run complete.")

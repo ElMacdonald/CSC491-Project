@@ -18,6 +18,7 @@ public class PythonRunner : MonoBehaviour
             psi.RedirectStandardOutput = true;
             psi.RedirectStandardError = true;
             psi.CreateNoWindow = true;
+            Debug.Log("Starting Python process...");
 
             using (Process process = Process.Start(psi))
             {
