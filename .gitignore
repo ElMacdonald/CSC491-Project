@@ -28,6 +28,9 @@ api_key.txt
 progress.txt
 inputs_progress.txt
 parsons_progress.txt
+player_input.txt
+sample_solution.txt
+ai_feedback.txt
 
 # This .gitignore file should be placed at the root of your Unity project directory
 #

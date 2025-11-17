@@ -1,2 +1,4 @@
+Problem: Make the player go 3 to the left, and then jump 7 up.
+Sample Solution:
 player.x -= 3
 player.Jump(7)
