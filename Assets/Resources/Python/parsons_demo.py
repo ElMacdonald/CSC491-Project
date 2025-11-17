@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QKeySequence
-from google import genai
+import google.generativeai as genai
 
 # --- Load API key from file ---
 KEY_FILE = "api_key.txt"  # Make sure this is in .gitignore

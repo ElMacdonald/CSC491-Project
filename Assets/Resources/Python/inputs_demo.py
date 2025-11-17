@@ -5,14 +5,17 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
-from google import genai
+import google.generativeai as genai
 
 # --- Load API key from file ---
-KEY_FILE = "api_key.txt"  # Make sure this is in .gitignore
-
+KEY_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "api_key.txt")  # Make sure this is in .gitignore
+print("hi")
 def load_api_key():
+    print("function called")
     if os.path.exists(KEY_FILE):
+        print("file exists")
         with open(KEY_FILE, "r") as f:
+            print("file opened")
             return f.read().strip()
     return None
 
@@ -21,7 +24,9 @@ if not API_KEY:
     raise ValueError(f"API key not found in {KEY_FILE}")
 
 # --- Initialize AI client ---
-CLIENT = genai.Client(api_key=API_KEY)
+genai.configure(api_key=API_KEY)
+MODEL = genai.GenerativeModel("gemini-2.0-flash")
+
 
 # --- Subclass QTextEdit to handle Shift+Enter and smaller tab width ---
 class CodeTextEdit(QTextEdit):
@@ -71,10 +76,8 @@ def get_ai_feedback(exercise_desc, student_code):
             "If the answer is correct, congratulate the student and explain why. "
             "Only provide the feedback text. Do not restate the question or give the correct answer directly."
         )
-        response = CLIENT.models.generate_content(
-            model="gemini-2.0-flash",
-            contents=prompt
-        )
+        response = MODEL.generate_content(prompt)
+
         return response.text
     except Exception as e:
         return f"(AI Feedback unavailable: {e})"
