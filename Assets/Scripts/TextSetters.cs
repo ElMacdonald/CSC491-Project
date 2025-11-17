@@ -17,30 +17,48 @@ public class TextFileReader : MonoBehaviour
     }
 
     public void LoadTextFile()
+{
+    if (string.IsNullOrEmpty(filePath))
     {
-        if (string.IsNullOrEmpty(filePath))
-        {
-            Debug.LogError("File path is empty.");
-            return;
-        }
-
-        if (!File.Exists(filePath))
-        {
-            Debug.LogError("File not found at: " + filePath);
-            return;
-        }
-
-        try
-        {
-            string contents = File.ReadAllText(filePath);
-            textDisplay.text = contents;
-        }
-        catch (System.Exception ex)
-        {
-            Debug.LogError("Error reading file: " + ex.Message);
-        }
-        panel.SetActive(true);
+        Debug.LogError("File path is empty.");
+        return;
     }
+
+    if (!File.Exists(filePath))
+    {
+        Debug.LogError("File not found at: " + filePath);
+        return;
+    }
+
+    try
+    {
+        string contents = File.ReadAllText(filePath);
+
+        // Find the "Feedback:" section
+        string searchTerm = "Feedback:";
+        int index = contents.IndexOf(searchTerm);
+
+        if (index != -1)
+        {
+            // Extract everything after "Feedback:"
+            string afterFeedback = contents.Substring(index + searchTerm.Length).Trim();
+
+            textDisplay.text = afterFeedback;
+        }
+        else
+        {
+            Debug.LogWarning("Could not find 'Feedback:' in the file.");
+            textDisplay.text = contents; // fallback
+        }
+    }
+    catch (System.Exception ex)
+    {
+        Debug.LogError("Error reading file: " + ex.Message);
+    }
+
+    panel.SetActive(true);
+}
+
 
     public void ClosePanel()
     {

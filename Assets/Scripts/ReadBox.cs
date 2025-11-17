@@ -36,7 +36,7 @@ public class ReadBox : MonoBehaviour
 
     IEnumerator PerformActions()
     {
-        ts.LoadTextFile();
+        //ts.LoadTextFile();
         failed = false;
         //playerMovement.ChangeSprite(0);
         int counter = 0;
