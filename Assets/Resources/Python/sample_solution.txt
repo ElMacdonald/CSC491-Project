@@ -1,0 +1,2 @@
+player.x -= 3
+player.Jump(7)
