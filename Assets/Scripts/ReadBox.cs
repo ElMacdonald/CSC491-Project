@@ -13,6 +13,7 @@ public class ReadBox : MonoBehaviour
     public bool failed = false;
     public TextMeshProUGUI[] codeLines;
 
+    public TextFileReader ts; //pmo
     void Start()
     {
         //input.onEndEdit.AddListener(delegate { ReadBoxInput(); });
@@ -126,6 +127,8 @@ public class ReadBox : MonoBehaviour
         foreach(var codeLine in codeLines){
             codeLine.color = Color.white;
         }
+
+        ts.LoadTextFile();
     }
     
 }

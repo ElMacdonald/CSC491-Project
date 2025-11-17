@@ -1,2 +1,1 @@
-player.x += 3
-player.Jump(2)
+asdfasdfasdfasddf​
