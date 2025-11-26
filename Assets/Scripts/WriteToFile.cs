@@ -13,7 +13,7 @@ public class TMPToFileWriter : MonoBehaviour
     private void Awake()
     {
         // Build the correct path on ANY computer
-        filePath = Path.Combine(Application.dataPath, "Resources/Python/player_input.txt");
+        filePath = Path.Combine(Application.dataPath, "Stuff/Python/player_input.txt");
     }
 
     public void SaveTextToFile()

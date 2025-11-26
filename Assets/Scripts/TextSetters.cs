@@ -15,7 +15,7 @@ public class TextFileReader : MonoBehaviour
     void Awake()
     {
         // Automatically builds the correct full path on any computer
-        filePath = Path.Combine(Application.dataPath, "Resources/Python/ai_feedback.txt");
+        filePath = Path.Combine(Application.dataPath, "Stuff/Python/ai_feedback.txt");
     }
 
     public void LoadTextFile()
@@ -46,14 +46,16 @@ public class TextFileReader : MonoBehaviour
             Debug.LogWarning("Could not find 'Feedback:' in the file.");
             textDisplay.text = contents; // fallback
         }
+    }
         catch (System.Exception ex)
         {
             Debug.LogError("Error reading file: " + ex.Message);
         }
 
         //panel.SetActive(true);
-    }
 
+    
+    }
     public void ClosePanel()
     {
         panel.SetActive(false);

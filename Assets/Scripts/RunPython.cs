@@ -11,7 +11,7 @@ public class PythonRunner : MonoBehaviour
     private void Awake()
     {
         pythonExePath = FindPythonExecutable();
-        pythonScriptPath = Path.Combine(Application.dataPath, "Resources/Python/inputs_demo.py");
+        pythonScriptPath = Path.Combine(Application.dataPath, "Stuff/Python/inputs_demo.py");
 
         //Debug.Log("Python Path = " + pythonExePath);
         //Debug.Log("Script Path = " + pythonScriptPath);
