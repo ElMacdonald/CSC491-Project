@@ -26,10 +26,25 @@ public class TextFileReader : MonoBehaviour
             return;
         }
 
-        try
+    try
+    {
+        string contents = File.ReadAllText(filePath);
+
+        // Find the "Feedback:" section
+        string searchTerm = "Feedback:";
+        int index = contents.IndexOf(searchTerm);
+
+        if (index != -1)
         {
-            string contents = File.ReadAllText(filePath);
-            textDisplay.text = contents;
+            // Extract everything after "Feedback:"
+            string afterFeedback = contents.Substring(index + searchTerm.Length).Trim();
+
+            textDisplay.text = afterFeedback;
+        }
+        else
+        {
+            Debug.LogWarning("Could not find 'Feedback:' in the file.");
+            textDisplay.text = contents; // fallback
         }
         catch (System.Exception ex)
         {
