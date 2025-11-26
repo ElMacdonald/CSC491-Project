@@ -7,23 +7,19 @@ public class TextFileReader : MonoBehaviour
     [Header("UI Text Component")]
     public TextMeshProUGUI textDisplay;
 
-    [Header("Full file path here")]
-    public string filePath;
-
+    [Header("Panel to show text")]
     public GameObject panel;
-    void Start()
+
+    private string filePath;   // auto-generated
+
+    void Awake()
     {
-        //LoadTextFile();
+        // Automatically builds the correct full path on any computer
+        filePath = Path.Combine(Application.dataPath, "Resources/Python/ai_feedback.txt");
     }
 
     public void LoadTextFile()
     {
-        if (string.IsNullOrEmpty(filePath))
-        {
-            Debug.LogError("File path is empty.");
-            return;
-        }
-
         if (!File.Exists(filePath))
         {
             Debug.LogError("File not found at: " + filePath);
@@ -39,7 +35,8 @@ public class TextFileReader : MonoBehaviour
         {
             Debug.LogError("Error reading file: " + ex.Message);
         }
-        panel.SetActive(true);
+
+        //panel.SetActive(true);
     }
 
     public void ClosePanel()

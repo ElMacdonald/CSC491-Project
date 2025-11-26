@@ -1,24 +1,39 @@
 using UnityEngine;
 using System.Diagnostics;
-using Debug = UnityEngine.Debug;
+using System.IO;
+using System;
 
 public class PythonRunner : MonoBehaviour
 {
-    public string pythonExePath = @"C:\Users\kylem\AppData\Local\Programs\Python\Python314\python.exe";
-    public string pythonScriptPath = @"D:\Unity\CSC491-Project\Assets\Resources\Python\inputs_demo.py";
+    private string pythonExePath;
+    private string pythonScriptPath;
+
+    private void Awake()
+    {
+        pythonExePath = FindPythonExecutable();
+        pythonScriptPath = Path.Combine(Application.dataPath, "Resources/Python/inputs_demo.py");
+
+        //Debug.Log("Python Path = " + pythonExePath);
+        //Debug.Log("Script Path = " + pythonScriptPath);
+    }
 
     public void RunPython()
     {
+        if (pythonExePath == null)
+        {
+            //Debug.LogError("Python not found on this computer.");
+            return;
+        }
+
         try
         {
             ProcessStartInfo psi = new ProcessStartInfo();
-            psi.FileName = pythonExePath;  // MUST be python.exe
-            psi.Arguments = $"\"{pythonScriptPath}\"";  // the script you want python to run
+            psi.FileName = pythonExePath;
+            psi.Arguments = $"\"{pythonScriptPath}\"";
             psi.UseShellExecute = false;
             psi.RedirectStandardOutput = true;
             psi.RedirectStandardError = true;
             psi.CreateNoWindow = true;
-            Debug.Log("Starting Python process...");
 
             using (Process process = Process.Start(psi))
             {
@@ -26,15 +41,85 @@ public class PythonRunner : MonoBehaviour
                 string error = process.StandardError.ReadToEnd();
                 process.WaitForExit();
 
-                Debug.Log("PYTHON OUTPUT:\n" + output);
+                //Debug.Log("PYTHON OUTPUT:\n" + output);
 
-                if (!string.IsNullOrEmpty(error))
-                    Debug.LogError("PYTHON ERROR:\n" + error);
+                //if (!string.IsNullOrEmpty(error))
+                    //Debug.LogError("PYTHON ERROR:\n" + error);
             }
         }
-        catch (System.Exception e)
+        catch (Exception e)
         {
-            Debug.LogError("Failed to run Python: " + e.Message);
+            //Debug.LogError("Failed to run Python: " + e.Message);
+        }
+    }
+
+    // -------------------------------------------------------
+    // PYTHON AUTO-DETECTION
+    // -------------------------------------------------------
+    private string FindPythonExecutable()
+    {
+        // 1: Try "py" launcher (Windows standard)
+        if (CommandExists("py"))
+        {
+            return "py"; // this will execute `py your_script.py`
+        }
+
+        // 2: Try python in PATH
+        if (CommandExists("python"))
+            return "python";
+
+        if (CommandExists("python3"))
+            return "python3";
+
+        // 3: Scan common install dirs
+        string[] common = new[]
+        {
+            @"C:\Users\" + Environment.UserName + @"\AppData\Local\Programs\Python",
+            @"C:\Python311",
+            @"C:\Python312",
+            @"C:\Python313",
+            @"C:\Python314",
+            @"C:\Program Files\Python311",
+            @"C:\Program Files\Python312",
+            @"C:\Program Files\Python313",
+            @"C:\Program Files\Python314"
+        };
+
+        foreach (string root in common)
+        {
+            if (!Directory.Exists(root)) continue;
+
+            foreach (string dir in Directory.GetDirectories(root))
+            {
+                string exe = Path.Combine(dir, "python.exe");
+                if (File.Exists(exe))
+                    return exe;
+            }
+        }
+
+        return null; // Python not found
+    }
+
+    private bool CommandExists(string command)
+    {
+        try
+        {
+            Process p = new Process();
+            p.StartInfo.FileName = command;
+            p.StartInfo.Arguments = "--version";
+            p.StartInfo.UseShellExecute = false;
+            p.StartInfo.RedirectStandardError = true;
+            p.StartInfo.RedirectStandardOutput = true;
+            p.StartInfo.CreateNoWindow = true;
+
+            p.Start();
+            p.WaitForExit();
+
+            return p.ExitCode == 0;
+        }
+        catch
+        {
+            return false;
         }
     }
 }
