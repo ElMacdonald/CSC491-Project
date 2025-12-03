@@ -7,21 +7,20 @@ public class TMPToFileWriter : MonoBehaviour
     [Header("TMP Text Component")]
     public TextMeshProUGUI textSource;
 
-    [Header("Full output file path")]
-    public string filePath;
+    // Automatically generated file path – no need to assign in Inspector
+    private string filePath;
 
-    // Call this from a button or manually
+    private void Awake()
+    {
+        // Build the correct path on ANY computer
+        filePath = Path.Combine(Application.dataPath, "Stuff/Python/player_input.txt");
+    }
+
     public void SaveTextToFile()
     {
         if (textSource == null)
         {
             Debug.LogError("TextMeshProUGUI source is not assigned.");
-            return;
-        }
-
-        if (string.IsNullOrEmpty(filePath))
-        {
-            Debug.LogError("File path is empty.");
             return;
         }
 

@@ -7,28 +7,24 @@ public class TextFileReader : MonoBehaviour
     [Header("UI Text Component")]
     public TextMeshProUGUI textDisplay;
 
-    [Header("Full file path here")]
-    public string filePath;
-
+    [Header("Panel to show text")]
     public GameObject panel;
-    void Start()
+
+    private string filePath;   // auto-generated
+
+    void Awake()
     {
-        //LoadTextFile();
+        // Automatically builds the correct full path on any computer
+        filePath = Path.Combine(Application.dataPath, "Stuff/Python/ai_feedback.txt");
     }
 
     public void LoadTextFile()
-{
-    if (string.IsNullOrEmpty(filePath))
     {
-        Debug.LogError("File path is empty.");
-        return;
-    }
-
-    if (!File.Exists(filePath))
-    {
-        Debug.LogError("File not found at: " + filePath);
-        return;
-    }
+        if (!File.Exists(filePath))
+        {
+            Debug.LogError("File not found at: " + filePath);
+            return;
+        }
 
     try
     {
@@ -51,15 +47,15 @@ public class TextFileReader : MonoBehaviour
             textDisplay.text = contents; // fallback
         }
     }
-    catch (System.Exception ex)
-    {
-        Debug.LogError("Error reading file: " + ex.Message);
+        catch (System.Exception ex)
+        {
+            Debug.LogError("Error reading file: " + ex.Message);
+        }
+
+        //panel.SetActive(true);
+
+    
     }
-
-    panel.SetActive(true);
-}
-
-
     public void ClosePanel()
     {
         panel.SetActive(false);
