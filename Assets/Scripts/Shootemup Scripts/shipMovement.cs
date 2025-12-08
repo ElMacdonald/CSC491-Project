@@ -8,14 +8,14 @@ public class shipMovement : MonoBehaviour
 {
     private float horizontalInput;
     private float verticalInput;
-    private float speed;
+    public float speed;
     public GameObject projectilePrefab;
     private Transform firePoint;             
     private float projectileSpeed = 15f;
     private float fireSpeed = .15f;
     private float canFire = 0f;
     private Vector3 movement;
-    private float power = 1f;
+    public float power = 1f;
     public GameObject textmesh;
     public GameObject bombText;
     public GameObject livesText;
@@ -36,10 +36,10 @@ public class shipMovement : MonoBehaviour
         verticalInput = Input.GetAxisRaw("Vertical");
         firePoint = this.transform;
         if(Input.GetKeyDown(KeyCode.LeftShift)){
-            speed = 2.0f;
+            //speed = 2.0f;
         }
         else if(Input.GetKeyUp(KeyCode.LeftShift)){
-            speed = 4f;
+            //speed = 4f;
         }
         if(Input.GetButton("Shoot" )&& Time.time > canFire){
             FireProjectile(power);
@@ -71,6 +71,12 @@ public class shipMovement : MonoBehaviour
             Rigidbody2D rb1 = newProjectile1.GetComponent<Rigidbody2D>();
             rb1.velocity = Vector2.up * projectileSpeed;
             }
+        }
+        else
+        {
+            GameObject newProjectile = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
+            Rigidbody2D rb = newProjectile.GetComponent<Rigidbody2D>();
+            rb.velocity = Vector2.up * projectileSpeed;
         }
     }
 

@@ -42,6 +42,6 @@ public class Draggable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
 
         // If the line wasn’t successfully dropped in a new drop zone, snap back
         //rectTransform.position = originalPosition;
-        transform.SetParent(originalParent, true);
+        //transform.SetParent(originalParent, true);
     }
 }

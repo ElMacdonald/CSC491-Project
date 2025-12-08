@@ -27,6 +27,7 @@ public class Movement : MonoBehaviour
     public float floatAmplitude = 0.05f;
     public float floatFrequency = 6f;
     private Vector3 basePos;
+    public bool canTele=true;
 
     void Start(){
         spr = GetComponent<SpriteRenderer>();
@@ -91,9 +92,11 @@ public class Movement : MonoBehaviour
     }
 
     public void SetX(float x){
-        Vector3 pos = transform.position;
-        pos.x = x;
-        transform.position = pos;
+        if(canTele){
+            Vector3 pos = transform.position;
+            pos.x = x;
+            transform.position = pos;
+        }
     }
 
     public void JumpRight(float distance, float height){
