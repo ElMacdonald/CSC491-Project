@@ -55,6 +55,8 @@
         "UserSettings/": true,
         "temp/": true,
         "Temp/": true
+        
     },
     "dotnet.defaultSolution": "CSC491-Project.sln"
+    
 }
