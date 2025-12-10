@@ -30,7 +30,7 @@ public class PythonRunner : MonoBehaviour
         try
         {
             ProcessStartInfo psi = new ProcessStartInfo();
-            pythonExePath = "C:\\Users\\kylem\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe";
+            
             psi.FileName = pythonExePath;
 
             psi.Arguments = $"\"{pythonScriptPath}\" {fileNumber}";
