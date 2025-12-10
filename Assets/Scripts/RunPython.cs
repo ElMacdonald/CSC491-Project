@@ -8,28 +8,33 @@ public class PythonRunner : MonoBehaviour
     private string pythonExePath;
     private string pythonScriptPath;
 
+    public int fileNumber = 1;   // <--- Set in Inspector
+
+
+    
+
     private void Awake()
     {
         pythonExePath = FindPythonExecutable();
         pythonScriptPath = Path.Combine(Application.dataPath, "Stuff/Python/inputs_demo.py");
-
-        //Debug.Log("Python Path = " + pythonExePath);
-        //Debug.Log("Script Path = " + pythonScriptPath);
     }
 
     public void RunPython()
     {
         if (pythonExePath == null)
         {
-            //Debug.LogError("Python not found on this computer.");
+            UnityEngine.Debug.LogError("Python not found on this computer.");
             return;
         }
 
         try
         {
             ProcessStartInfo psi = new ProcessStartInfo();
+            
             psi.FileName = pythonExePath;
-            psi.Arguments = $"\"{pythonScriptPath}\"";
+
+            psi.Arguments = $"\"{pythonScriptPath}\" {fileNumber}";
+
             psi.UseShellExecute = false;
             psi.RedirectStandardOutput = true;
             psi.RedirectStandardError = true;
@@ -41,15 +46,15 @@ public class PythonRunner : MonoBehaviour
                 string error = process.StandardError.ReadToEnd();
                 process.WaitForExit();
 
-                //Debug.Log("PYTHON OUTPUT:\n" + output);
+                UnityEngine.Debug.Log("PYTHON OUTPUT:\n" + output);
 
-                //if (!string.IsNullOrEmpty(error))
-                    //Debug.LogError("PYTHON ERROR:\n" + error);
+                if (!string.IsNullOrEmpty(error))
+                    UnityEngine.Debug.LogError("PYTHON ERROR:\n" + error);
             }
         }
         catch (Exception e)
         {
-            //Debug.LogError("Failed to run Python: " + e.Message);
+            UnityEngine.Debug.LogError("Failed to run Python: " + e.Message);
         }
     }
 
@@ -83,6 +88,7 @@ public class PythonRunner : MonoBehaviour
             @"C:\Program Files\Python312",
             @"C:\Program Files\Python313",
             @"C:\Program Files\Python314"
+            
         };
 
         foreach (string root in common)

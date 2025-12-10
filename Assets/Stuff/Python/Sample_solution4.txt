@@ -1,0 +1,4 @@
+player.damage = 10
+player.damage += 6
+player.SetDamage(damage)
+player.Setup()

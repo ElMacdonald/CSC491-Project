@@ -1,0 +1,2 @@
+player.x = 5
+player.x = -5

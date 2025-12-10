@@ -1,12 +1,15 @@
 import os
+import sys
+print(sys.executable)
 import google.generativeai as genai
+
 
 # ---- FILE PATHS ----
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 API_KEY_FILE = os.path.join(BASE_DIR, "api_key.txt")
 PLAYER_INPUT_FILE = os.path.join(BASE_DIR, "player_input.txt")
-SAMPLE_SOLUTION_FILE = os.path.join(BASE_DIR, "sample_solution.txt")
+SAMPLE_SOLUTION_FILE = os.path.join(BASE_DIR, "Sample_solution.txt")
 OUTPUT_FILE = os.path.join(BASE_DIR, "ai_feedback.txt")
 
 
@@ -18,6 +21,18 @@ def load_api_key():
     with open(API_KEY_FILE, "r", encoding="utf-8") as f:
         return f.read().strip()
 
+def numbered_file(base_name, num, ext="txt"):
+    return os.path.join(BASE_DIR, f"{base_name}{num}.{ext}")
+
+if len(sys.argv) > 1:
+    try:
+        FILE_NUM = int(sys.argv[1])
+    except:
+        FILE_NUM = 1
+else:
+    FILE_NUM = 1
+
+print(f"Using input set #{FILE_NUM}")
 
 API_KEY = load_api_key()
 print("key loaded")
@@ -96,6 +111,8 @@ You MUST follow these rules exactly:
 
 10. Do NOT use the sample solution code in your response.
 
+11. With numbers, don't give exact values for the solution; use approximate terms like "more" or "less".
+
 You must ONLY produce the required three sections and nothing else.
 """
 
@@ -104,8 +121,10 @@ You must ONLY produce the required three sections and nothing else.
 def run_evaluator():
     print("Reading input files...")
 
+    sample_file = numbered_file("Sample_solution", FILE_NUM)
+    print(sample_file)
     player_input = read_file(PLAYER_INPUT_FILE)
-    sample_solution = read_file(SAMPLE_SOLUTION_FILE)
+    sample_solution = read_file(sample_file)
 
     prompt = build_prompt(player_input, sample_solution)
 

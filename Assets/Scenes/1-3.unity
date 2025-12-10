@@ -1440,6 +1440,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 103f02eba53bc3549aaa650282ec645c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  fileNumber: 2
 --- !u!4 &428748496
 Transform:
   m_ObjectHideFlags: 0
@@ -2127,7 +2128,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   winPanel: {fileID: 1133946412}
   player: {fileID: 1343466593}
-  respawnPoint: {fileID: 0}
+  respawnPoint: {x: 0, y: 0}
   winDelay: 1
   checkInterval: 0.2
 --- !u!4 &573524750
@@ -5108,6 +5109,7 @@ MonoBehaviour:
   currentFrame: 0
   floatAmplitude: 0.1
   floatFrequency: 3
+  canTele: 1
 --- !u!1 &1434569403
 GameObject:
   m_ObjectHideFlags: 0
