@@ -111,7 +111,7 @@ You MUST follow these rules exactly:
 
 10. Do NOT use the sample solution code in your response.
 
-11. With numbers, don't give exact values for the solution; use approximate terms like "more" or "less".
+11. With numbers, don't give exact values for the feedback; use approximate terms like "more" or "less".
 
 You must ONLY produce the required three sections and nothing else.
 """

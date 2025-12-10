@@ -4,10 +4,12 @@ using System.IO;
 
 public class TMPToFileWriter : MonoBehaviour
 {
+
+    
     [Header("TMP Text Component")]
     public TextMeshProUGUI textSource;
 
-    // Automatically generated file path – no need to assign in Inspector
+    // Automatically generated file path
     private string filePath;
 
     private void Awake()
