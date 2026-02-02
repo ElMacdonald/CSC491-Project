@@ -1,4 +1,2 @@
-player.damage = 10
-player.damage += 6
-player.SetDamage(damage)
-player.Setup()
+move = 5
+player.x = move

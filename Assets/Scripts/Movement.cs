@@ -5,7 +5,7 @@ using UnityEngine;
 public class Movement : MonoBehaviour
 {
     private float horizontal;
-    private string moveState = "idle";
+    public string moveState = "idle";
     private SpriteRenderer spr;
     public Sprite[] sprites;
 
@@ -37,7 +37,7 @@ public class Movement : MonoBehaviour
     void Update(){
         jumpTimer += Time.deltaTime;
         handleAnims();
-        if(moveState != "jumping"){
+        if(moveState != "jumping" && moveState != "setY"){
             landTimer += Time.deltaTime;
             if(landTimer >= landDelay){
             Vector3 p = basePos;
@@ -97,6 +97,20 @@ public class Movement : MonoBehaviour
             pos.x = x;
             transform.position = pos;
         }
+    }
+    
+    public void SetY(float y)
+    {
+        Debug.Log("attempting y set");
+        if (canTele)
+        {
+            Debug.Log(moveState);
+            Vector3 pos = transform.position;
+            // Adds to the y value instead of setting it, but performs an operation to mimic setting it
+            pos.y += (y - pos.y);
+            transform.position = pos;
+        }
+        moveState = "idle";
     }
 
     public void JumpRight(float distance, float height){

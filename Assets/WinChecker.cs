@@ -19,11 +19,21 @@ public class WinChecker : MonoBehaviour
     public float checkInterval = 0.2f;
 
     private Coroutine winRoutine;
+    public GameObject[] collectables;
 
+    public ObjectiveTracker objTracker;
     private void Start()
     {
         InvokeRepeating(nameof(CheckChildren), 0f, checkInterval);
         respawnPoint = player.position;
+        objTracker = GameObject.Find("Objective Manager").GetComponent<ObjectiveTracker>();
+        int counter = 0;
+        collectables = new GameObject[transform.childCount];
+        foreach (Transform child in transform)
+        {
+            collectables[counter] = child.gameObject;
+            counter++;
+        }
     }
 
     private void CheckChildren()
@@ -49,7 +59,18 @@ public class WinChecker : MonoBehaviour
 
         // All children are inactive → start win delay if not already started
         if (winRoutine == null)
-            winRoutine = StartCoroutine(WinAfterDelay());
+            if(objTracker != null)
+            {
+                if(objTracker.levelWon == true)
+                {
+                    winRoutine = StartCoroutine(WinAfterDelay());
+                }
+            }
+            else
+            {
+                winRoutine = StartCoroutine(WinAfterDelay());
+            }
+                
     }
 
     private IEnumerator WinAfterDelay()
@@ -91,9 +112,10 @@ public class WinChecker : MonoBehaviour
         }
 
         // Reactivate all children
-        foreach (Transform child in transform)
+        foreach(GameObject collectable in collectables)
         {
-            child.gameObject.SetActive(true);
+            if(collectable != null)
+                collectable.SetActive(true);
         }
 
         // Hide win panel
