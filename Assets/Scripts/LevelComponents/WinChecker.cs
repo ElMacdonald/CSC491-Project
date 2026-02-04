@@ -26,7 +26,8 @@ public class WinChecker : MonoBehaviour
     {
         InvokeRepeating(nameof(CheckChildren), 0f, checkInterval);
         respawnPoint = player.position;
-        objTracker = GameObject.Find("Objective Manager").GetComponent<ObjectiveTracker>();
+        if(GameObject.Find("Objective Manager") != null)
+            objTracker = GameObject.Find("Objective Manager").GetComponent<ObjectiveTracker>();
         int counter = 0;
         collectables = new GameObject[transform.childCount];
         foreach (Transform child in transform)

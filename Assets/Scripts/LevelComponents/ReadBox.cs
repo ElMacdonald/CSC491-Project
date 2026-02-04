@@ -22,7 +22,8 @@ public class ReadBox : MonoBehaviour
     void Start()
     {
         // input.onEndEdit.AddListener(delegate { ReadBoxInput(); });
-        objTracker = GameObject.Find("Objective Manager").GetComponent<ObjectiveTracker>();
+        if(GameObject.Find("Objective Manager") != null)
+            objTracker = GameObject.Find("Objective Manager").GetComponent<ObjectiveTracker>();
     }
 
     public void ReadBoxInput()
