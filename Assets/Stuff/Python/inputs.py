@@ -1,7 +1,7 @@
 import os
 import sys
 print(sys.executable)
-import google.generativeai as genai
+from groq import Groq
 
 
 # ---- FILE PATHS ----
@@ -13,7 +13,7 @@ SAMPLE_SOLUTION_FILE = os.path.join(BASE_DIR, "Sample_solution.txt")
 OUTPUT_FILE = os.path.join(BASE_DIR, "ai_feedback.txt")
 
 
-# ---- LOAD API KEY (same logic you used originally) ----
+# ---- LOAD API KEY ----
 def load_api_key():
     if not os.path.exists(API_KEY_FILE):
         raise ValueError(f"API key not found: {API_KEY_FILE}")
@@ -37,9 +37,8 @@ print(f"Using input set #{FILE_NUM}")
 API_KEY = load_api_key()
 print("key loaded")
 
-# ---- INITIALIZE AI (exactly like your working code) ----
-genai.configure(api_key=API_KEY)
-MODEL = genai.GenerativeModel("gemini-2.0-flash")
+# ---- INITIALIZE AI ----
+client = Groq(api_key=API_KEY)
 
 
 # ---- FILE UTILITIES ----
@@ -128,11 +127,19 @@ def run_evaluator():
 
     prompt = build_prompt(player_input, sample_solution)
 
-    print("Calling Gemini model...")
+    print("Calling Groq model...")
 
     try:
-        response = MODEL.generate_content(prompt)
-        feedback = response.text.strip()
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": "You are a middle school Python teacher."},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.2,
+            max_tokens=50,
+        )
+        feedback = response.choices[0].message.content.strip()
     except Exception as e:
         feedback = f"(AI Error: {e})"
 
