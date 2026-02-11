@@ -1,5 +1,5 @@
 import os
-import google.generativeai as genai
+from groq import Groq
 
 # ---- FILE PATHS ----
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -23,8 +23,7 @@ API_KEY = load_api_key()
 print("key loaded")
 
 # ---- INITIALIZE AI ----
-genai.configure(api_key=API_KEY)
-MODEL = genai.GenerativeModel("gemini-2.0-flash")
+client = Groq(api_key=API_KEY)
 
 
 # ---- FILE UTILITIES ----
@@ -104,11 +103,19 @@ def run_evaluator():
 
     prompt = build_prompt(player_input, sample_solution)
 
-    print("Calling Gemini model...")
+    print("Calling Groq model...")
 
     try:
-        response = MODEL.generate_content(prompt)
-        feedback = response.text.strip()
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": "You are a middle school Python teacher."},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.2,
+            max_tokens=200,
+        )
+        feedback = response.choices[0].message.content.strip()
     except Exception as e:
         feedback = f"(AI Error: {e})"
 
