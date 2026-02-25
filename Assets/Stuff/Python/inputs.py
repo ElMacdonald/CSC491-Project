@@ -137,7 +137,7 @@ def run_evaluator():
                 {"role": "user", "content": prompt},
             ],
             temperature=0.2,
-            max_tokens=50,
+            max_tokens=200,
         )
         feedback = response.choices[0].message.content.strip()
     except Exception as e:

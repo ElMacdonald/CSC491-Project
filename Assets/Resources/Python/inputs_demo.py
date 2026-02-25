@@ -25,7 +25,7 @@ print("key loaded")
 # ---- INITIALIZE AI (exactly like your working code) ----
 genai.configure(api_key=API_KEY)
 MODEL = genai.GenerativeModel("gemini-2.0-flash")
-
+ 
 
 # ---- FILE UTILITIES ----
 def read_file(path):

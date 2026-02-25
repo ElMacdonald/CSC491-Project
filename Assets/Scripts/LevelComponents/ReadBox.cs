@@ -18,6 +18,7 @@ public class ReadBox : MonoBehaviour
     public List<string> variableNames = new List<string>();
     public List<float> variableValues = new List<float>();
     public ObjectiveTracker objTracker;
+    private Coroutine codeRunning;
 
     void Start()
     {
@@ -35,7 +36,7 @@ public class ReadBox : MonoBehaviour
         foreach (string line in lines)
             textLines.Add(line.Trim());
 
-        StartCoroutine(PerformActions());
+        codeRunning = StartCoroutine(PerformActions());
     }
 
     //Checks whether provided value is var or num
@@ -188,5 +189,19 @@ public class ReadBox : MonoBehaviour
 
         foreach (var codeLine in codeLines)
             codeLine.color = Color.white;
+    }
+ 
+    public void breakAndReset()
+    {
+        if (codeRunning != null)
+            StopCoroutine(codeRunning);
+
+        foreach (var codeLine in codeLines)
+            codeLine.color = Color.white;
+
+        variableNames.Clear();
+        variableValues.Clear();
+        failed = false;
+        playerMovement.gameObject.transform.position = playerMovement.basePos;
     }
 }

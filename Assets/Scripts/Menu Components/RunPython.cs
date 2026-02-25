@@ -8,14 +8,14 @@ public class PythonRunner : MonoBehaviour
     private string pythonExePath;
     private string pythonScriptPath;
 
-    public int fileNumber = 1;   // <--- Set in Inspector
-
+    public int fileNumber = 1;  
 
     
 
     private void Awake()
     {
         pythonExePath = FindPythonExecutable();
+        UnityEngine.Debug.Log(pythonExePath);
         pythonScriptPath = Path.Combine(Application.dataPath, "Stuff/Python/inputs.py");
     }
 
@@ -60,25 +60,19 @@ public class PythonRunner : MonoBehaviour
         }
     }
 
-    // -------------------------------------------------------
-    // PYTHON AUTO-DETECTION
-    // -------------------------------------------------------
     private string FindPythonExecutable()
     {
-        // 1: Try "py" launcher (Windows standard)
         if (CommandExists("py"))
         {
-            return "py"; // this will execute `py your_script.py`
+            return "py";
         }
 
-        // 2: Try python in PATH
         if (CommandExists("python"))
             return "python";
 
         if (CommandExists("python3"))
             return "python3";
 
-        // 3: Scan common install dirs
         string[] common = new[]
         {
             @"C:\Users\" + Environment.UserName + @"\AppData\Local\Programs\Python",

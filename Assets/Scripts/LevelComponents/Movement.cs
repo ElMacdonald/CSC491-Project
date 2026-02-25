@@ -26,7 +26,7 @@ public class Movement : MonoBehaviour
 
     public float floatAmplitude = 0.05f;
     public float floatFrequency = 6f;
-    private Vector3 basePos;
+    public Vector3 basePos;
     public bool canTele=true;
 
     void Start(){
@@ -37,6 +37,7 @@ public class Movement : MonoBehaviour
     void Update(){
         jumpTimer += Time.deltaTime;
         handleAnims();
+        /*
         if(moveState != "jumping" && moveState != "setY"){
             landTimer += Time.deltaTime;
             if(landTimer >= landDelay){
@@ -47,7 +48,7 @@ public class Movement : MonoBehaviour
         }else{
             landTimer = 0f;
         }
-        
+        */
 
         Ray2D ray = new Ray2D(transform.position, Vector2.down);
         RaycastHit2D hit = Physics2D.Raycast(ray.origin, ray.direction, 2f);
