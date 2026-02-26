@@ -1,0 +1,6 @@
+gem = 8.5
+player.x = 6
+player.x = -9
+player.x = gem
+player.x = -6
+player.x = gem

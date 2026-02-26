@@ -1,0 +1,4 @@
+gem1 = 0
+gem2 = 5
+player.x = gem1
+player.x = gem2

@@ -1,0 +1,5 @@
+jumppad = 5
+player.x = -6
+player.x = 3
+player.x = jumppad
+player.x = -6
