@@ -1,6 +1,6 @@
 using UnityEngine;
 using System.Collections;
-
+using UnityEngine.SceneManagement;
 public class WinChecker : MonoBehaviour
 {
     [Header("UI Panel to Enable When All Children Are Inactive")]
@@ -24,6 +24,7 @@ public class WinChecker : MonoBehaviour
     public ObjectiveTracker objTracker;
     private void Start()
     {
+         Debug.Log("[WinChecker] Started on scene: " + gameObject.scene.name);
         InvokeRepeating(nameof(CheckChildren), 0f, checkInterval);
         respawnPoint = player.position;
         if(GameObject.Find("Objective Manager") != null)
@@ -76,6 +77,7 @@ public class WinChecker : MonoBehaviour
 
     private IEnumerator WinAfterDelay()
     {
+        Debug.Log("[WinChecker] WinAfterDelay started");
         float timer = 0f;
 
         while (timer < winDelay)
@@ -96,10 +98,16 @@ public class WinChecker : MonoBehaviour
         }
 
         // After delay → WIN
-        if (winPanel != null)
-            winPanel.SetActive(true);
+if (winPanel != null)
+    winPanel.SetActive(true);
 
-        winRoutine = null;
+
+if (LevelManager.Instance != null)
+    LevelManager.Instance.CompleteLevel(
+        UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex
+    );
+
+winRoutine = null;
     }
 
 

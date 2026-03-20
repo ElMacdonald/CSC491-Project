@@ -18,12 +18,24 @@ public class LevelManager : MonoBehaviour
     }
 
 
-    public void CompleteLevel(int levelIndex)
+public void CompleteLevel(int levelIndex)
+{
+    Debug.Log("[LevelManager] Session.currentPlayer is: " + (Session.currentPlayer == null ? "NULL" : Session.currentPlayer.userId));
+    PlayerPrefs.SetInt(LEVEL_KEY_PREFIX + levelIndex, 1);
+    PlayerPrefs.Save();
+    Debug.Log($"Level {levelIndex} marked as completed.");
+
+    // Also save to Firebase
+    if (Session.currentPlayer != null)
     {
-        PlayerPrefs.SetInt(LEVEL_KEY_PREFIX + levelIndex, 1);
-        PlayerPrefs.Save();
-        Debug.Log($"Level {levelIndex} marked as completed.");
+        Session.currentPlayer.MarkLevelComplete(levelIndex.ToString(), stars: 1);
+        FirebaseManager.Instance.Save(
+            Session.userId,
+            Session.currentPlayer,
+            onSuccess: () => Debug.Log("[Firebase] Level " + levelIndex + " synced.")
+        );
     }
+}
 
 
     public bool IsLevelCompleted(int levelIndex)
