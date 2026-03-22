@@ -1,9 +1,14 @@
-using System.Diagnostics;
 using UnityEngine;
+#if !UNITY_WEBGL
+using System.Diagnostics;
 using System.IO;
+#endif
 
+// NOTE: Process.Start is not supported in WebGL.
+// This script is fully disabled at compile time for WebGL builds.
 public class RunPythonFile : MonoBehaviour
 {
+#if !UNITY_WEBGL
     [Header("Path to your Python file")]
     public string pythonFilePath = "C:/path/to/your/script.py";
 
@@ -20,9 +25,8 @@ public class RunPythonFile : MonoBehaviour
             return;
         }
 
-        // Set up process start info
         ProcessStartInfo psi = new ProcessStartInfo();
-        psi.FileName = "python"; // or "python3" if needed
+        psi.FileName = "python";
         psi.Arguments = $"\"{pythonFilePath}\"";
         psi.UseShellExecute = false;
         psi.RedirectStandardOutput = true;
@@ -32,16 +36,12 @@ public class RunPythonFile : MonoBehaviour
         try
         {
             Process process = Process.Start(psi);
-
-            // Read the standard output and error
             string output = process.StandardOutput.ReadToEnd();
             string errors = process.StandardError.ReadToEnd();
-
             process.WaitForExit();
 
             if (!string.IsNullOrEmpty(output))
                 UnityEngine.Debug.Log("Python output:\n" + output);
-
             if (!string.IsNullOrEmpty(errors))
                 UnityEngine.Debug.LogError("Python errors:\n" + errors);
         }
@@ -50,4 +50,13 @@ public class RunPythonFile : MonoBehaviour
             UnityEngine.Debug.LogError("Error running Python script: " + e.Message);
         }
     }
+#else
+    // WebGL stub — this component does nothing in the browser build.
+    [Header("Path to your Python file (unused in WebGL)")]
+    public string pythonFilePath = "";
+    void Start() =>
+        UnityEngine.Debug.Log("[RunPythonFile] Disabled in WebGL build.");
+    public void RunPythonScript() =>
+        UnityEngine.Debug.Log("[RunPythonFile] RunPythonScript() is a no-op in WebGL.");
+#endif
 }

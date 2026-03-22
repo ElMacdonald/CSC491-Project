@@ -1,82 +1,44 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 using TMPro;
-using System.IO;
 
+// WebGL-safe: replaced File I/O with in-memory PythonInputStore.
+// Application.dataPath is a server URL in WebGL and cannot be written to.
 public class ParsonsFileReading : MonoBehaviour
 {
     public GameObject[] dropZones;
 
-    private string filePath;
-
-    private void Awake()
-    {
-        // Works on all platforms
-        filePath = Path.Combine(Application.dataPath, "Stuff/Python/player_input.txt");
-
-        // Ensure file exists
-        if (!File.Exists(filePath))
-        {
-            File.WriteAllText(filePath, "");
-        }
-    }
-
     // -----------------------------
-    // WRITE DROPZONE TEXT TO FILE
+    // WRITE DROPZONE TEXT TO STORE
     // -----------------------------
     public void WriteDropzones()
     {
-        try
-        {
-            List<string> lines = new List<string>();
+        List<string> lines = new List<string>();
 
-            foreach (GameObject zone in dropZones)
-            {
-                TextMeshProUGUI tmp = zone.GetComponentInChildren<TextMeshProUGUI>();
-                if (tmp != null)
-                {
-                    lines.Add(tmp.text);
-                }
-                else
-                {
-                    lines.Add(""); // keep line count consistent
-                }
-            }
-
-            File.WriteAllLines(filePath, lines);
-            Debug.Log("Wrote text to: " + filePath);
-        }
-        catch (System.Exception ex)
+        foreach (GameObject zone in dropZones)
         {
-            Debug.LogError("Error writing file: " + ex.Message);
+            TextMeshProUGUI tmp = zone.GetComponentInChildren<TextMeshProUGUI>();
+            lines.Add(tmp != null ? tmp.text : "");
         }
+
+        PythonInputStore.lines = lines.ToArray();
+        Debug.Log("[ParsonsFileReading] Wrote " + lines.Count + " lines to PythonInputStore.");
     }
 
     // -----------------------------
-    // READ FILE INTO DROPZONES
+    // READ STORE INTO DROPZONES
     // -----------------------------
     public void ReadDropzones()
     {
-        try
-        {
-            string[] lines = File.ReadAllLines(filePath);
+        string[] lines = PythonInputStore.lines;
 
-            for (int i = 0; i < dropZones.Length && i < lines.Length; i++)
-            {
-                TextMeshProUGUI tmp = dropZones[i].GetComponentInChildren<TextMeshProUGUI>();
-                if (tmp != null)
-                {
-                    tmp.text = lines[i];
-                }
-            }
-
-            Debug.Log("Read text from: " + filePath);
-        }
-        catch (System.Exception ex)
+        for (int i = 0; i < dropZones.Length && i < lines.Length; i++)
         {
-            Debug.LogError("Error reading file: " + ex.Message);
+            TextMeshProUGUI tmp = dropZones[i].GetComponentInChildren<TextMeshProUGUI>();
+            if (tmp != null)
+                tmp.text = lines[i];
         }
+
+        Debug.Log("[ParsonsFileReading] Read " + lines.Length + " lines from PythonInputStore.");
     }
 }

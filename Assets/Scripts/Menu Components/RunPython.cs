@@ -1,16 +1,18 @@
 using UnityEngine;
+#if !UNITY_WEBGL
 using System.Diagnostics;
 using System.IO;
 using System;
+#endif
+
 
 public class PythonRunner : MonoBehaviour
 {
+#if !UNITY_WEBGL
     private string pythonExePath;
     private string pythonScriptPath;
 
-    public int fileNumber = 1;  
-
-    
+    public int fileNumber = 1;
 
     private void Awake()
     {
@@ -30,13 +32,9 @@ public class PythonRunner : MonoBehaviour
         try
         {
             ProcessStartInfo psi = new ProcessStartInfo();
-            
             pythonExePath = pythonExePath.Replace("\"", "");
             psi.FileName = pythonExePath;
-            
-
             psi.Arguments = $"\"{pythonScriptPath}\" {fileNumber}";
-
             psi.UseShellExecute = false;
             psi.RedirectStandardOutput = true;
             psi.RedirectStandardError = true;
@@ -49,7 +47,6 @@ public class PythonRunner : MonoBehaviour
                 process.WaitForExit();
 
                 UnityEngine.Debug.Log("PYTHON OUTPUT:\n" + output);
-
                 if (!string.IsNullOrEmpty(error))
                     UnityEngine.Debug.LogError("PYTHON ERROR:\n" + error);
             }
@@ -62,44 +59,28 @@ public class PythonRunner : MonoBehaviour
 
     private string FindPythonExecutable()
     {
-        if (CommandExists("py"))
-        {
-            return "py";
-        }
-
-        if (CommandExists("python"))
-            return "python";
-
-        if (CommandExists("python3"))
-            return "python3";
+        if (CommandExists("py"))   return "py";
+        if (CommandExists("python"))  return "python";
+        if (CommandExists("python3")) return "python3";
 
         string[] common = new[]
         {
             @"C:\Users\" + Environment.UserName + @"\AppData\Local\Programs\Python",
-            @"C:\Python311",
-            @"C:\Python312",
-            @"C:\Python313",
-            @"C:\Python314",
-            @"C:\Program Files\Python311",
-            @"C:\Program Files\Python312",
-            @"C:\Program Files\Python313",
-            @"C:\Program Files\Python314"
-            
+            @"C:\Python311", @"C:\Python312", @"C:\Python313", @"C:\Python314",
+            @"C:\Program Files\Python311", @"C:\Program Files\Python312",
+            @"C:\Program Files\Python313", @"C:\Program Files\Python314"
         };
 
         foreach (string root in common)
         {
             if (!Directory.Exists(root)) continue;
-
             foreach (string dir in Directory.GetDirectories(root))
             {
                 string exe = Path.Combine(dir, "python.exe");
-                if (File.Exists(exe))
-                    return exe;
+                if (File.Exists(exe)) return exe;
             }
         }
-
-        return null; // Python not found
+        return null;
     }
 
     private bool CommandExists(string command)
@@ -113,15 +94,18 @@ public class PythonRunner : MonoBehaviour
             p.StartInfo.RedirectStandardError = true;
             p.StartInfo.RedirectStandardOutput = true;
             p.StartInfo.CreateNoWindow = true;
-
             p.Start();
             p.WaitForExit();
-
             return p.ExitCode == 0;
         }
-        catch
-        {
-            return false;
-        }
+        catch { return false; }
     }
+#else
+
+    public int fileNumber = 1;
+    private void Awake() =>
+        UnityEngine.Debug.Log("[PythonRunner] Disabled in WebGL build.");
+    public void RunPython() =>
+        UnityEngine.Debug.Log("[PythonRunner] RunPython() is a no-op in WebGL.");
+#endif
 }

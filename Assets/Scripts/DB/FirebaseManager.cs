@@ -12,7 +12,7 @@ public class FirebaseManager : MonoBehaviour
     public static FirebaseManager Instance { get; private set; }
 
     [Header("Firebase Project ID")]
-    public string projectId = "seniorprojectgame-ceb56";
+    public string projectId = "";
 
     private string BaseUrl =>
         $"https://firestore.googleapis.com/v1/projects/{projectId}/databases/(default)/documents";
@@ -24,9 +24,7 @@ public class FirebaseManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
-    // ── Public API ───────────────────────────────────────────
 
-    /// <summary>Save a student's PlayerData to Firestore.</summary>
     public void Save(string userId, PlayerData data,
         System.Action onSuccess = null,
         System.Action<string> onError = null)
@@ -36,7 +34,7 @@ public class FirebaseManager : MonoBehaviour
         StartCoroutine(PatchDocument("students/" + userId, json, onSuccess, onError));
     }
 
-    /// <summary>Load a student's PlayerData from Firestore.</summary>
+
     public void Load(string userId,
         System.Action<PlayerData> onSuccess,
         System.Action<string> onError = null)
