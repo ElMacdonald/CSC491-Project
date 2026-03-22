@@ -12,7 +12,7 @@ public class FirebaseManager : MonoBehaviour
     public static FirebaseManager Instance { get; private set; }
 
     [Header("Firebase Project ID")]
-    public string projectId = "seniorprojectgame-ceb56";
+    public string projectId = "";
 
     private string BaseUrl =>
         $"https://firestore.googleapis.com/v1/projects/{projectId}/databases/(default)/documents";
