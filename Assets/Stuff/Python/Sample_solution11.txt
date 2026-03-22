@@ -1,0 +1,6 @@
+gap1 = 3
+gap2 = -5
+gap3 = 0
+player.x = gap1
+player.x = gap2
+player.x = gap3
