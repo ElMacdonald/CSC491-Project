@@ -10,27 +10,40 @@ public class ShopMenuBhv : MonoBehaviour
     public bool purchased;
     public Sprite purchaseSprite;
     public string itemType;
-    // Start is called before the first frame update
+
     void Start()
     {
         MakePriceText();
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    void Update() { }
 
     public void MakePurchase(int cost)
     {
         CurrencyHolderTemp ch = FindObjectOfType<CurrencyHolderTemp>();
-        if(!purchased)
+        if (!purchased)
         {
-            if(ch.Spend(cost))
+            if (ch.Spend(cost))
             {
                 purchased = true;
                 Destroy(this.transform.Find("PriceText").gameObject);
+
+                // [FIREBASE] Save purchase to Firebase
+                if (Session.currentPlayer != null)
+                {
+                    string itemId = itemType + "_" + gameObject.name;
+                    if (!Session.currentPlayer.unlockedCosmetics.Contains(itemId))
+                        Session.currentPlayer.unlockedCosmetics.Add(itemId);
+
+                    Session.currentPlayer.coins = ch.currentCurrency;
+
+                    FirebaseManager.Instance.Save(
+                        Session.userId,
+                        Session.currentPlayer,
+                        onSuccess: () => Debug.Log("[Shop] Saved purchase: " + itemId)
+                    );
+                }
+                // [/FIREBASE]
             }
         }
 
@@ -43,33 +56,59 @@ public class ShopMenuBhv : MonoBehaviour
     void Equip()
     {
         Debug.Log("Equipped " + itemType);
-        if(itemType == "hat")
+
+        if (itemType == "hat")
         {
             GameObject.Find("Hat").GetComponent<Image>().sprite = purchaseSprite;
-            // reset transparency to be visible
             Color hatColor = GameObject.Find("Hat").GetComponent<Image>().color;
             hatColor.a = 1f;
             GameObject.Find("Hat").GetComponent<Image>().color = hatColor;
-        }else if(itemType == "shirt")
+
+            // [FIREBASE]
+            if (Session.currentPlayer != null)
+            {
+                Session.currentPlayer.equippedHat = gameObject.name;
+                FirebaseManager.Instance.Save(Session.userId, Session.currentPlayer);
+            }
+            // [/FIREBASE]
+        }
+        else if (itemType == "shirt")
         {
             GameObject.Find("Body").GetComponent<Image>().sprite = purchaseSprite;
             Color bodyColor = GameObject.Find("Body").GetComponent<Image>().color;
             bodyColor.a = 1f;
             GameObject.Find("Body").GetComponent<Image>().color = bodyColor;
-        }else if(itemType == "pants")
+
+            // [FIREBASE]
+            if (Session.currentPlayer != null)
+            {
+                Session.currentPlayer.equippedShirt = gameObject.name;
+                FirebaseManager.Instance.Save(Session.userId, Session.currentPlayer);
+            }
+            // [/FIREBASE]
+        }
+        else if (itemType == "pants")
         {
             GameObject.Find("Legs").GetComponent<Image>().sprite = purchaseSprite;
             Color legsColor = GameObject.Find("Legs").GetComponent<Image>().color;
             legsColor.a = 1f;
             GameObject.Find("Legs").GetComponent<Image>().color = legsColor;
+
+            // [FIREBASE]
+            if (Session.currentPlayer != null)
+            {
+                Session.currentPlayer.equippedPants = gameObject.name;
+                FirebaseManager.Instance.Save(Session.userId, Session.currentPlayer);
+            }
+            // [/FIREBASE]
         }
     }
 
-     // Instantiates price text on top of button if haven't purchased
-     // Adds a colored background so text is visible
+    // Instantiates price text on top of button if haven't purchased
+    // Adds a colored background so text is visible
     void MakePriceText()
     {
-        if(!purchased)
+        if (!purchased)
         {
             GameObject priceTextObj = new GameObject("PriceText");
             priceTextObj.transform.SetParent(this.transform);
@@ -89,7 +128,7 @@ public class ShopMenuBhv : MonoBehaviour
             bgObj.AddComponent<RectTransform>();
             bgObj.AddComponent<Image>();
             Image bgImage = bgObj.GetComponent<Image>();
-            bgImage.color = new Color(0f, 0f, 0f, 0.75f); // semi-transparent black
+            bgImage.color = new Color(0f, 0f, 0f, 0.75f);
             RectTransform bgRt = bgObj.GetComponent<RectTransform>();
             bgRt.sizeDelta = new Vector2(100, 50);
             bgRt.anchoredPosition = Vector2.zero;
