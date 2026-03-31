@@ -7,12 +7,20 @@ public class APIManager : MonoBehaviour
 {
     public static APIManager Instance;
 
-    private string inputsURL = "http://18.219.83.7:8080/inputs";
-    private string parsonsURL = "http://18.219.83.7:8080/parsons";
+    private string inputsURL = "http://18.117.196.241:8080/inputs";
+    private string parsonsURL = "http://18.117.196.241:8080/parsons";
 
     private void Awake()
     {
-        Instance = this;
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject); // optional but recommended
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
     }
 
     [System.Serializable]
