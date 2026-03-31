@@ -2,20 +2,25 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Networking;
 
-
-
-//  Uses Firestore REST API — no Firebase SDK needed at all.
-//  Project ID is already set to project below.
-
 public class FirebaseManager : MonoBehaviour
 {
     public static FirebaseManager Instance { get; private set; }
 
     [Header("Firebase Project ID")]
-    public string projectId = "";
+    [Tooltip("Set in the Inspector on the title screen. Fallback used when auto-created at runtime.")]
+    public string projectId = "seniorprojectgame-ceb56";
 
     private string BaseUrl =>
         $"https://firestore.googleapis.com/v1/projects/{projectId}/databases/(default)/documents";
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    static void AutoCreate()
+    {
+        if (Instance != null) return;
+        var go = new GameObject("FirebaseManager [Auto]");
+        go.AddComponent<FirebaseManager>();
+        DontDestroyOnLoad(go);
+    }
 
     void Awake()
     {
@@ -23,7 +28,6 @@ public class FirebaseManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
     }
-
 
     public void Save(string userId, PlayerData data,
         System.Action onSuccess = null,
@@ -34,15 +38,12 @@ public class FirebaseManager : MonoBehaviour
         StartCoroutine(PatchDocument("students/" + userId, json, onSuccess, onError));
     }
 
-
     public void Load(string userId,
         System.Action<PlayerData> onSuccess,
         System.Action<string> onError = null)
     {
         StartCoroutine(GetDocument("students/" + userId, onSuccess, onError));
     }
-
-    // ── REST Coroutines ──────────────────────────────────────
 
     IEnumerator PatchDocument(string path, string json,
         System.Action onSuccess,
@@ -60,12 +61,16 @@ public class FirebaseManager : MonoBehaviour
 
         if (req.result == UnityWebRequest.Result.Success)
         {
+#if UNITY_EDITOR
             Debug.Log("[Firebase] Saved: " + path);
+#endif
             onSuccess?.Invoke();
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogWarning("[Firebase] Save failed: " + req.error);
+#endif
             onError?.Invoke(req.error);
         }
     }
@@ -82,29 +87,28 @@ public class FirebaseManager : MonoBehaviour
         if (req.result == UnityWebRequest.Result.Success)
         {
             PlayerData data = ParseFirestoreDocument(req.downloadHandler.text);
+#if UNITY_EDITOR
             Debug.Log("[Firebase] Loaded: " + path);
+#endif
             onSuccess?.Invoke(data);
         }
         else
         {
             if (req.responseCode == 404)
             {
-                // New student — not an error
-                Debug.Log("[Firebase] No existing save found — new student.");
                 onSuccess?.Invoke(null);
             }
             else
             {
+#if UNITY_EDITOR
                 Debug.LogWarning("[Firebase] Load failed: " + req.error);
+#endif
                 onError?.Invoke(req.error);
             }
         }
     }
 
-    // ── Firestore JSON helpers ───────────────────────────────
-    // Stores entire PlayerData as one JSON string field inside
-    // the Firestore document. Simple and easy to read in console.
-
+    // Wraps PlayerData as a single stringValue field for Firestore
     string BuildFirestoreDocument(PlayerData data)
     {
         string inner   = JsonUtility.ToJson(data);

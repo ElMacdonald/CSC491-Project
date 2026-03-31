@@ -1,6 +1,5 @@
 using UnityEngine;
 
-
 public static class Session
 {
     public static string     userId        = "";
@@ -8,6 +7,26 @@ public static class Session
     public static PlayerData currentPlayer = null;
 
     private static float _sessionStartTime = 0f;
+
+#if UNITY_EDITOR
+    // Auto-populates a dev session when entering play mode outside the title screen
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    static void DevAutoLogin()
+    {
+        if (currentPlayer != null) return;
+
+        userId        = "DEV_devuser";
+        classroomCode = "DEV";
+        currentPlayer = new PlayerData
+        {
+            userId        = userId,
+            displayName   = "Dev User",
+            classroomCode = classroomCode
+        };
+        StartSession();
+        Debug.LogWarning("[Session] DEV AUTO-LOGIN active.");
+    }
+#endif
 
     public static void StartSession()
     {
@@ -19,7 +38,7 @@ public static class Session
         }
     }
 
-    // Called before every Firebase save to log play time
+    // Accumulates play time before each Firebase save
     public static void FlushPlayTime()
     {
         if (currentPlayer != null && _sessionStartTime > 0f)

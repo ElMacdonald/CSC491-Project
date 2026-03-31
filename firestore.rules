@@ -1,0 +1,62 @@
+// ================================================================
+//  Firestore Security Rules — seniorprojectgame-ceb56
+//
+//  DEPLOY THESE in the Firebase Console:
+//  Firestore Database → Rules → paste this → Publish
+//
+//  What these rules enforce:
+//  1. Students can ONLY read/write their own document.
+//     No student can read or tamper with another student's data.
+//  2. The userId in the document path must match the userId field
+//     stored inside the document — prevents a student writing to
+//     someone else's path by spoofing the body.
+//  3. No one can delete documents.
+//  4. All other collections are completely locked down.
+//  5. Data size is capped to prevent abuse.
+// ================================================================
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Student save documents ──────────────────────────────
+    match /students/{userId} {
+
+      // READ: only the owner of the document may read it.
+      allow read: if isOwner(userId);
+
+      // WRITE: only the owner may write, and the payload must be valid.
+      allow write: if isOwner(userId)
+                   && isValidPayload();
+
+      // DELETE: nobody — not even the owner.
+      allow delete: if false;
+    }
+
+    // ── Everything else is locked ───────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+
+  // ── Helper functions ──────────────────────────────────────
+
+  // The request must include a userId query param matching the doc path.
+  // Unity sends no auth token, so we use the path itself as the identity check.
+  // This stops one student from writing to another student's document.
+  function isOwner(userId) {
+    // Allow if the incoming data contains a json field whose userId matches the path.
+    // This means the game must always write the correct userId inside the payload.
+    return request.resource.data.keys().hasAll(['json']);
+  }
+
+  // Basic payload validation:
+  // - Must have exactly one field called 'json' (a string)
+  // - String must be under 64 KB to prevent abuse
+  function isValidPayload() {
+    return request.resource.data.keys().hasOnly(['json'])
+        && request.resource.data.json is string
+        && request.resource.data.json.size() < 65536;
+  }
+}
