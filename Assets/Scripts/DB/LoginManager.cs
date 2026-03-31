@@ -19,12 +19,13 @@ public class LoginManager : MonoBehaviour
     {
         if (PlayerPrefs.HasKey("sessionUserId") && PlayerPrefs.HasKey("sessionTimeEpoch"))
         {
-            long savedEpoch = long.Parse(PlayerPrefs.GetString("sessionTimeEpoch", "0"));
-            long elapsed    = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds() - savedEpoch;
+            string savedUserId = PlayerPrefs.GetString("sessionUserId", "");
+            long savedEpoch    = long.Parse(PlayerPrefs.GetString("sessionTimeEpoch", "0"));
+            long elapsed       = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds() - savedEpoch;
 
             if (elapsed < (long)SESSION_DURATION)
             {
-                AutoLogin(PlayerPrefs.GetString("sessionUserId"), PlayerPrefs.GetString("sessionCode", ""));
+                AutoLogin(savedUserId, PlayerPrefs.GetString("sessionCode", ""));
                 return;
             }
             else
@@ -66,6 +67,7 @@ public class LoginManager : MonoBehaviour
         {
             if (loadedData != null)
             {
+                // Existing player — restore their save.
                 Session.currentPlayer = loadedData;
 #if UNITY_EDITOR
                 Debug.Log("[Login] Loaded existing save for: " + userId);
@@ -73,6 +75,7 @@ public class LoginManager : MonoBehaviour
             }
             else
             {
+                // Genuinely new player — create and save a fresh record.
                 Session.currentPlayer = new PlayerData
                 {
                     userId        = userId,
@@ -89,23 +92,17 @@ public class LoginManager : MonoBehaviour
 
             Session.StartSession();
             SaveSessionCookie(userId, joinCode);
+            SyncProgressAndRefreshUI();
             loginPanel.SetActive(false);
             SetStatus("");
         },
         (error) =>
         {
+
 #if UNITY_EDITOR
-            Debug.LogWarning("[Login] Firebase unavailable, offline mode: " + error);
+            Debug.LogWarning("[Login] Firebase load failed: " + error);
 #endif
-            Session.currentPlayer = new PlayerData
-            {
-                userId        = userId,
-                displayName   = name,
-                classroomCode = joinCode
-            };
-            Session.StartSession();
-            loginPanel.SetActive(false);
-            SetStatus("(Offline mode)");
+            SetStatus("Could not reach server. Check your connection and try again.");
         });
     }
 
@@ -119,6 +116,7 @@ public class LoginManager : MonoBehaviour
         {
             Session.currentPlayer = loadedData ?? new PlayerData { userId = userId, classroomCode = code };
             Session.StartSession();
+            SyncProgressAndRefreshUI();
             loginPanel.SetActive(false);
             SetStatus("");
 #if UNITY_EDITOR
@@ -127,10 +125,13 @@ public class LoginManager : MonoBehaviour
         },
         (error) =>
         {
-            Session.currentPlayer = new PlayerData { userId = userId, classroomCode = code };
-            Session.StartSession();
-            loginPanel.SetActive(false);
-            SetStatus("(Offline mode)");
+
+#if UNITY_EDITOR
+            Debug.LogWarning("[Login] Auto-login Firebase load failed: " + error);
+#endif
+            ClearSession();
+            loginPanel.SetActive(true);
+            SetStatus("Could not reach server. Check your connection and try again.");
         });
     }
 
@@ -149,6 +150,25 @@ public class LoginManager : MonoBehaviour
         PlayerPrefs.DeleteKey("sessionTime");
         PlayerPrefs.DeleteKey("sessionTimeEpoch");
         PlayerPrefs.Save();
+    }
+
+    // Syncs completed levels from Firebase into PlayerPrefs, then tells all
+    // level select UI to redraw called right after Session.currentPlayer is set.
+    void SyncProgressAndRefreshUI()
+    {
+        if (Session.currentPlayer == null) return;
+
+        const string prefix = "Level_Completed_";
+        foreach (string levelId in Session.currentPlayer.completedLevelIds)
+            if (int.TryParse(levelId, out int idx))
+                PlayerPrefs.SetInt(prefix + idx, 1);
+        PlayerPrefs.Save();
+
+        foreach (var ui in FindObjectsByType<LevelSelectUI>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            ui.RefreshAllButtons();
+
+        foreach (var carousel in FindObjectsByType<PlanetCarouselUI>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            carousel.RefreshAllPanels();
     }
 
     void SetStatus(string msg)

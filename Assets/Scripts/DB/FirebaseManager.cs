@@ -24,7 +24,14 @@ public class FirebaseManager : MonoBehaviour
 
     void Awake()
     {
-        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        if (Instance != null && Instance != this)
+        {
+            // Copy the inspector-set projectId to the live instance before bowing out,
+            if (!string.IsNullOrEmpty(projectId))
+                Instance.projectId = projectId;
+            Destroy(this);
+            return;
+        }
         Instance = this;
         DontDestroyOnLoad(gameObject);
     }
@@ -120,12 +127,26 @@ public class FirebaseManager : MonoBehaviour
     {
         try
         {
-            const string key = "\"stringValue\":\"";
+            // Firestore REST API may format as "stringValue":" or "stringValue": "
+            // so search for just the field name and then skip to the opening quote.
+            const string key = "\"stringValue\"";
             int start = firestoreJson.IndexOf(key);
             if (start < 0) return null;
             start += key.Length;
-            int end = firestoreJson.IndexOf("\"", start);
-            if (end < 0) return null;
+            // Skip whitespace and colon, then land on the opening quote
+            while (start < firestoreJson.Length && firestoreJson[start] != '"') start++;
+            if (start >= firestoreJson.Length) return null;
+            start++; // step past the opening quote
+
+            // Walk forward to find the closing quote, skipping over escaped quotes (\")
+            int end = start;
+            while (end < firestoreJson.Length)
+            {
+                if (firestoreJson[end] == '\\') { end += 2; continue; } // skip escaped char
+                if (firestoreJson[end] == '"')  { break; }              // real closing quote
+                end++;
+            }
+            if (end >= firestoreJson.Length) return null;
 
             string escaped = firestoreJson.Substring(start, end - start);
             string inner   = escaped.Replace("\\\"", "\"").Replace("\\\\", "\\");

@@ -23,12 +23,11 @@ service cloud.firestore {
     // ── Student save documents ──────────────────────────────
     match /students/{userId} {
 
-      // READ: only the owner of the document may read it.
-      allow read: if isOwner(userId);
+      // READ: open — no Firebase Auth in use, userId in the path acts as the key.
+      allow read: if true;
 
-      // WRITE: only the owner may write, and the payload must be valid.
-      allow write: if isOwner(userId)
-                   && isValidPayload();
+      // WRITE: payload must be valid shape and size.
+      allow write: if isValidPayload();
 
       // DELETE: nobody — not even the owner.
       allow delete: if false;
@@ -41,15 +40,6 @@ service cloud.firestore {
   }
 
   // ── Helper functions ──────────────────────────────────────
-
-  // The request must include a userId query param matching the doc path.
-  // Unity sends no auth token, so we use the path itself as the identity check.
-  // This stops one student from writing to another student's document.
-  function isOwner(userId) {
-    // Allow if the incoming data contains a json field whose userId matches the path.
-    // This means the game must always write the correct userId inside the payload.
-    return request.resource.data.keys().hasAll(['json']);
-  }
 
   // Basic payload validation:
   // - Must have exactly one field called 'json' (a string)
