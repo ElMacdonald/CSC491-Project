@@ -1,6 +1,5 @@
 using UnityEngine;
 
-
 public static class Session
 {
     public static string     userId        = "";
@@ -19,7 +18,7 @@ public static class Session
         }
     }
 
-    // Called before every Firebase save to log play time
+    // Accumulates play time before each Firebase save
     public static void FlushPlayTime()
     {
         if (currentPlayer != null && _sessionStartTime > 0f)

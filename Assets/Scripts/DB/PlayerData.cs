@@ -1,32 +1,26 @@
 using System.Collections.Generic;
 
-
 [System.Serializable]
 public class PlayerData
 {
-    // Identity
     public string userId        = "";
     public string displayName   = "";
     public string classroomCode = "";
 
-    // Level progress (parallel lists — JsonUtility can't do Dictionary)
+    // Parallel lists used instead of Dictionary (JsonUtility limitation)
     public List<string> completedLevelIds = new List<string>();
     public List<int>    levelStars        = new List<int>();
     public List<int>    levelAttempts     = new List<int>();
 
-    // Currency & shop
     public int coins = 0;
     public List<string> unlockedCosmetics = new List<string>();
     public string equippedHat   = "";
     public string equippedShirt = "";
     public string equippedPants = "";
 
-    // Session metadata
     public string lastLogin     = "";
     public float  totalPlayTime = 0f;
     public int    totalSessions = 0;
-
-    // ── Helpers ──────────────────────────────────────────────
 
     public void MarkLevelComplete(string levelId, int stars = 1)
     {
@@ -44,10 +38,7 @@ public class PlayerData
         }
     }
 
-    public bool IsLevelComplete(string levelId)
-    {
-        return completedLevelIds.Contains(levelId);
-    }
+    public bool IsLevelComplete(string levelId) => completedLevelIds.Contains(levelId);
 
     public int GetStars(string levelId)
     {

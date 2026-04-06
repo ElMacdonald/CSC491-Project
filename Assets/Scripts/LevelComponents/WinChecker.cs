@@ -1,138 +1,93 @@
 using UnityEngine;
 using System.Collections;
 using UnityEngine.SceneManagement;
+
 public class WinChecker : MonoBehaviour
 {
-    [Header("UI Panel to Enable When All Children Are Inactive")]
+    [Header("Win Panel")]
     public GameObject winPanel;
 
-    [Header("Player Object To Reset")]
+    [Header("Player")]
     public Transform player;
-
-    [Header("Where the player should respawn")]
     public Vector2 respawnPoint;
 
-    [Header("Time before showing win panel (seconds)")]
-    public float winDelay = 1f;
-
-    [Header("How often to check (seconds)")]
+    [Header("Timing")]
+    public float winDelay     = 1f;
     public float checkInterval = 0.2f;
 
     private Coroutine winRoutine;
     public GameObject[] collectables;
-
     public ObjectiveTracker objTracker;
+
     private void Start()
     {
-         Debug.Log("[WinChecker] Started on scene: " + gameObject.scene.name);
         InvokeRepeating(nameof(CheckChildren), 0f, checkInterval);
         respawnPoint = player.position;
-        if(GameObject.Find("Objective Manager") != null)
+
+        if (GameObject.Find("Objective Manager") != null)
             objTracker = GameObject.Find("Objective Manager").GetComponent<ObjectiveTracker>();
-        int counter = 0;
+
         collectables = new GameObject[transform.childCount];
+        int i = 0;
         foreach (Transform child in transform)
-        {
-            collectables[counter] = child.gameObject;
-            counter++;
-        }
+            collectables[i++] = child.gameObject;
     }
 
     private void CheckChildren()
     {
-        // Already won?
-        if (winPanel != null && winPanel.activeSelf)
-            return;
+        if (winPanel != null && winPanel.activeSelf) return;
 
-        // Check every child
         foreach (Transform child in transform)
         {
             if (child.gameObject.activeSelf)
             {
-                // A child is active → cancel win timer if running
-                if (winRoutine != null)
-                {
-                    StopCoroutine(winRoutine);
-                    winRoutine = null;
-                }
+                if (winRoutine != null) { StopCoroutine(winRoutine); winRoutine = null; }
                 return;
             }
         }
 
-        // All children are inactive → start win delay if not already started
         if (winRoutine == null)
-            if(objTracker != null)
+        {
+            if (objTracker != null)
             {
-                if(objTracker.levelWon == true)
-                {
-                    winRoutine = StartCoroutine(WinAfterDelay());
-                }
+                if (objTracker.levelWon) winRoutine = StartCoroutine(WinAfterDelay());
             }
             else
             {
                 winRoutine = StartCoroutine(WinAfterDelay());
             }
-                
+        }
     }
 
     private IEnumerator WinAfterDelay()
     {
-        Debug.Log("[WinChecker] WinAfterDelay started");
         float timer = 0f;
-
         while (timer < winDelay)
         {
             timer += Time.deltaTime;
-
-            // If ANY child reactivates during delay → cancel win
             foreach (Transform child in transform)
             {
-                if (child.gameObject.activeSelf)
-                {
-                    winRoutine = null;
-                    yield break;
-                }
+                if (child.gameObject.activeSelf) { winRoutine = null; yield break; }
             }
-
             yield return null;
         }
 
-        // After delay → WIN
-if (winPanel != null)
-    winPanel.SetActive(true);
+        if (winPanel != null) winPanel.SetActive(true);
 
+        if (LevelManager.Instance != null)
+            LevelManager.Instance.CompleteLevel(SceneManager.GetActiveScene().buildIndex);
 
-if (LevelManager.Instance != null)
-    LevelManager.Instance.CompleteLevel(
-        UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex
-    );
-
-winRoutine = null;
+        winRoutine = null;
     }
-
 
     public void ResetLevel()
     {
-        // Cancel win timer
-        if (winRoutine != null)
-        {
-            StopCoroutine(winRoutine);
-            winRoutine = null;
-        }
+        if (winRoutine != null) { StopCoroutine(winRoutine); winRoutine = null; }
 
-        // Reactivate all children
-        foreach(GameObject collectable in collectables)
-        {
-            if(collectable != null)
-                collectable.SetActive(true);
-        }
+        foreach (GameObject c in collectables)
+            if (c != null) c.SetActive(true);
 
-        // Hide win panel
-        if (winPanel != null)
-            winPanel.SetActive(false);
-
-        // Reset player position
-        if (player != null && respawnPoint != null)
-            player.position = respawnPoint;
+        if (winPanel != null) winPanel.SetActive(false);
+        if (player != null)   player.position = respawnPoint;
     }
 }

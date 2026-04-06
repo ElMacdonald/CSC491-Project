@@ -1,105 +1,98 @@
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro; 
-
+using TMPro;
+using System.Collections.Generic;
 
 public class LevelSelectUI : MonoBehaviour
 {
-    [Header("Level Buttons")]
-    [Tooltip("Drag your level buttons in here in order — index 0 is Level 1, index 1 is Level 2, etc.")]
-    public Button[] levelButtons;
-
     [Header("Button Colors")]
-    [Tooltip("What the button looks like before the player has beaten it")]
-    public Color defaultColor = Color.white;
-
-    [Tooltip("What the button looks like after the player beats it")]
+    public Color defaultColor   = Color.white;
     public Color completedColor = new Color(0.3f, 0.85f, 0.4f);
+    public Color lockedColor    = new Color(0.5f, 0.5f, 0.5f);
 
-    [Tooltip("What locked buttons look like — only used if level locking is turned on")]
-    public Color lockedColor = new Color(0.5f, 0.5f, 0.5f);
-
-    [Header("Optional: Level Locking")]
-    [Tooltip("Turn this on if you want players to beat levels in order before unlocking the next one")]
+    [Header("Level Locking")]
     public bool useLevelLocking = false;
 
-    private void OnEnable()
-    {
-        RefreshAllButtons();
-    }
+    [Header("Index Offset")]
+    [Tooltip("0-based index of the first level in this panel. Planet 1 = 0, Planet 2 = 15, Planet 3 = 30.")]
+    public int firstLevelIndex = 0;
 
-    // Goes through every button and sets its color depending on the level's state.
+    private void OnEnable() { RefreshAllButtons(); }
+
     public void RefreshAllButtons()
     {
-        if (LevelManager.Instance == null)
+        if (LevelManager.Instance == null) return;
+
+        List<GameObject> levelObjects = FindLevelObjects();
+        if (levelObjects.Count == 0) return;
+
+        for (int i = 0; i < levelObjects.Count; i++)
         {
-            Debug.LogWarning("LevelSelectUI: Can't find a LevelManager in the scene — make sure you have one!");
-            return;
-        }
+            int   levelIndex  = firstLevelIndex + i;
+            bool  isCompleted = LevelManager.Instance.IsLevelCompleted(levelIndex);
+            bool  isLocked    = useLevelLocking && levelIndex > 0
+                                && !LevelManager.Instance.IsLevelCompleted(levelIndex - 1);
+            Color target      = isLocked ? lockedColor : (isCompleted ? completedColor : defaultColor);
 
-        for (int i = 0; i < levelButtons.Length; i++)
-        {
-            if (levelButtons[i] == null) continue;
-
-            bool isCompleted = LevelManager.Instance.IsLevelCompleted(i);
-
-            // A level is locked if locking is enabled AND the previous level hasn't been beaten yet
-            bool isLocked = useLevelLocking && i > 0 && !LevelManager.Instance.IsLevelCompleted(i - 1);
-
-            ColorBlock colors = levelButtons[i].colors;
-
-            if (isLocked)
+            Button btn = levelObjects[i].GetComponent<Button>();
+            if (btn != null)
             {
-                colors.normalColor = lockedColor;
-                colors.highlightedColor = lockedColor;
-                levelButtons[i].interactable = false;
-            }
-            else if (isCompleted)
-            {
-                colors.normalColor = completedColor;
-                colors.highlightedColor = completedColor * 1.1f; 
-                levelButtons[i].interactable = true;
-            }
-            else
-            {
-                colors.normalColor = defaultColor;
-                colors.highlightedColor = defaultColor;
-                levelButtons[i].interactable = true;
+                ColorBlock cb       = btn.colors;
+                cb.normalColor      = target;
+                cb.highlightedColor = isCompleted ? completedColor * 1.1f : target;
+                cb.colorMultiplier  = 1f;
+                btn.colors          = cb;
+                btn.interactable    = !isLocked;
+                continue;
             }
 
-            colors.colorMultiplier = 1f;
-            levelButtons[i].colors = colors;
+            Image img = levelObjects[i].GetComponent<Image>();
+            if (img != null) { img.color = target; continue; }
 
-            // Also update the button's text label while we're at it
-            UpdateButtonLabel(levelButtons[i], i, isCompleted, isLocked);
+            foreach (var childImg in levelObjects[i].GetComponentsInChildren<Image>())
+                childImg.color = target;
         }
     }
 
-    // Updates the text on each button
-    private void UpdateButtonLabel(Button button, int levelIndex, bool isCompleted, bool isLocked)
+    private List<GameObject> FindLevelObjects()
     {
-        TMP_Text tmpText = button.GetComponentInChildren<TMP_Text>();
-        if (tmpText != null)
-        {
-            if (isLocked)
-                tmpText.text = "Locked";
-            else if (isCompleted)
-                tmpText.text = $"Level {levelIndex + 1}";
-            else
-                tmpText.text = $"Level {levelIndex + 1}";
-            return;
-        }
+        var result = new List<GameObject>();
+        CollectLevelChildren(transform, result);
+        result.Sort((a, b) => ParseLevelNumber(a.name).CompareTo(ParseLevelNumber(b.name)));
+        return result;
+    }
 
-        // No TMP found, try the old Text component
-        Text legacyText = button.GetComponentInChildren<Text>();
-        if (legacyText != null)
+    // Names to skip when scanning for level buttons
+    private static readonly HashSet<string> IgnoredNames =
+        new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
+        { "Button", "Back", "Return", "Close", "Exit" };
+
+    private void CollectLevelChildren(Transform parent, List<GameObject> result)
+    {
+        foreach (Transform child in parent)
         {
-            if (isLocked)
-                legacyText.text = "[Locked]";
-            else if (isCompleted)
-                legacyText.text = $"Level {levelIndex + 1}";
+            if (IgnoredNames.Contains(child.name)) continue;
+
+            if (IsLevelName(child.name))
+                result.Add(child.gameObject);
+            else if (child.GetComponent<Button>() != null)
+                result.Add(child.gameObject);
             else
-                legacyText.text = $"Level {levelIndex + 1}";
+                CollectLevelChildren(child, result);
         }
+    }
+
+    private bool IsLevelName(string name)
+    {
+        var parts = name.Split('-');
+        if (parts.Length != 2) return false;
+        return int.TryParse(parts[0], out _) && int.TryParse(parts[1], out _);
+    }
+
+    private int ParseLevelNumber(string name)
+    {
+        var parts = name.Split('-');
+        if (parts.Length == 2 && int.TryParse(parts[1], out int n)) return n;
+        return 0;
     }
 }
