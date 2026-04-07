@@ -7,8 +7,8 @@ public class APIManager : MonoBehaviour
 {
     public static APIManager Instance;
 
-    private string inputsURL = "http://18.117.196.241:8080/inputs";
-    private string parsonsURL = "http://18.117.196.241:8080/parsons";
+    private string inputsURL = "https://api.compilequest.org/inputs";
+    private string parsonsURL = "https://api.compilequest.org/parsons";
 
     private void Awake()
     {
