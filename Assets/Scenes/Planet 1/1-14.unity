@@ -7131,7 +7131,7 @@ MonoBehaviour:
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 5
+          m_IntArgument: 15
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
@@ -7545,7 +7545,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Next level: 1-5'
+  m_text: 'Next level: 1-15'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -8329,7 +8329,7 @@ MonoBehaviour:
   currentCollectables: 0
   varsNeeded: 1
   usedVars: 0
-  neededVars: 1
+  neededVars: 4
   levelWon: 0
   objectiveDisplay: {fileID: 1600458684}
 --- !u!4 &1715220048
