@@ -1,63 +1,84 @@
 using UnityEngine;
 using TMPro;
+#if !UNITY_WEBGL
 using System.IO;
+#endif
+
+// WebGL-safe feedback display.
+// 
+// DESKTOP behavior (unchanged):
+//   The Submit button calls LoadTextFile() after RunPython() finishes (blocking),
+//   so the file is already written. Works exactly as before.
+//
+// WEBGL behavior:
+//   The Submit button should NOT call LoadTextFile() directly.
+//   Instead, AIEvaluator.RunEvaluation() is called on the button,
+//   which fires off the async Groq API call and then calls LoadTextFile()
+//   itself once the response arrives.
+//   While waiting, the panel shows "Thinking..." (set by AIEvaluator.statusText).
 
 public class TextFileReader : MonoBehaviour
 {
-    [Header("UI Text Component")]
+    [Header("UI")]
     public TextMeshProUGUI textDisplay;
-
-    [Header("Panel to show text")]
     public GameObject panel;
 
-    private string filePath;   // auto-generated
+#if !UNITY_WEBGL
+    private string filePath;
 
     void Awake()
     {
-        // Automatically builds the correct full path on any computer
         filePath = Path.Combine(Application.dataPath, "Stuff/Python/ai_feedback.txt");
     }
+#endif
 
+    // Called by:
+    //   - The Submit button directly (desktop builds)
+    //   - AIEvaluator.EvaluateCoroutine() after the API returns (WebGL builds)
     public void LoadTextFile()
     {
-        if (!File.Exists(filePath))
+        string contents;
+
+#if UNITY_WEBGL
+        contents = AIFeedbackStore.feedback;
+        if (string.IsNullOrEmpty(contents))
         {
-            Debug.LogError("File not found at: " + filePath);
+            Debug.LogWarning("[TextFileReader] AIFeedbackStore is empty — AIEvaluator hasn't finished yet.");
+            if (textDisplay != null)
+                textDisplay.text = "Feedback not ready yet. Please wait a moment and try again.";
             return;
         }
-
-    try
-    {
-        string contents = File.ReadAllText(filePath);
-
-        // Find the "Feedback:" section
-        string searchTerm = "Feedback:";
-        int index = contents.IndexOf(searchTerm);
-
-        if (index != -1)
+#else
+        if (!File.Exists(filePath))
         {
-            // Extract everything after "Feedback:"
-            string afterFeedback = contents.Substring(index + searchTerm.Length).Trim();
-
-            textDisplay.text = afterFeedback;
+            Debug.LogError("[TextFileReader] File not found: " + filePath);
+            return;
         }
-        else
+        try
         {
-            Debug.LogWarning("Could not find 'Feedback:' in the file.");
-            textDisplay.text = contents; // fallback
+            contents = File.ReadAllText(filePath);
         }
-    }
         catch (System.Exception ex)
         {
-            Debug.LogError("Error reading file: " + ex.Message);
+            Debug.LogError("[TextFileReader] Error reading file: " + ex.Message);
+            return;
         }
+#endif
 
-        //panel.SetActive(true);
+        // Extract and display the "Feedback:" section
+        const string searchTerm = "Feedback:";
+        int index = contents.IndexOf(searchTerm);
+        if (textDisplay != null)
+            textDisplay.text = index != -1
+                ? contents.Substring(index + searchTerm.Length).Trim()
+                : contents; // fallback: show full text
 
-    
+        if (index == -1)
+            Debug.LogWarning("[TextFileReader] 'Feedback:' section not found in AI response.");
     }
+
     public void ClosePanel()
     {
-        panel.SetActive(false);
+        if (panel != null) panel.SetActive(false);
     }
 }
